@@ -1,0 +1,67 @@
+@options
+@packages
+-classpath
+'/home/ira/.m2/repository/org/postgresql/postgresql/42.6.0/postgresql-42.6.0.jar:/home/ira/.m2/repository/com/zaxxer/HikariCP/5.0.1/HikariCP-5.0.1.jar:/home/ira/.m2/repository/org/slf4j/slf4j-api/2.0.0-alpha1/slf4j-api-2.0.0-alpha1.jar:/home/ira/.m2/repository/org/liquibase/liquibase-core/4.20.0/liquibase-core-4.20.0.jar:/home/ira/.m2/repository/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar:/home/ira/.m2/repository/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0.jar:/home/ira/.m2/repository/org/yaml/snakeyaml/1.33/snakeyaml-1.33.jar:/home/ira/.m2/repository/com/opencsv/opencsv/5.7.1/opencsv-5.7.1.jar:/home/ira/.m2/repository/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar:/home/ira/.m2/repository/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0.jar:/home/ira/.m2/repository/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar:/home/ira/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar'
+-encoding
+'UTF-8'
+-private
+--release
+17
+-sourcepath
+'/home/ira/Documents/Y_LAB/product-catalog/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2025. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/home/ira/Documents/Y_LAB/product-catalog/target/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'product-catalog 1.0-SNAPSHOT API'
+-nohelp
+-use
+-version
+-windowtitle
+'product-catalog 1.0-SNAPSHOT API'
+org.idvairaz.menu
+org.idvairaz.cache
+org.idvairaz.cache.impl
+org.idvairaz.service
+org.idvairaz
+org.idvairaz.repository
+org.idvairaz.repository.impl
+org.idvairaz.config
+org.idvairaz.model
+/home/ira/.m2/repository/org/postgresql/postgresql/42.6.0/postgresql-42.6.0.jar = 1763065894890
+/home/ira/.m2/repository/com/zaxxer/HikariCP/5.0.1/HikariCP-5.0.1.jar = 1763142573098
+/home/ira/.m2/repository/org/slf4j/slf4j-api/2.0.0-alpha1/slf4j-api-2.0.0-alpha1.jar = 1763142573012
+/home/ira/.m2/repository/org/liquibase/liquibase-core/4.20.0/liquibase-core-4.20.0.jar = 1763065897433
+/home/ira/.m2/repository/javax/xml/bind/jaxb-api/2.3.1/jaxb-api-2.3.1.jar = 1730149018040
+/home/ira/.m2/repository/javax/activation/javax.activation-api/1.2.0/javax.activation-api-1.2.0.jar = 1730149001292
+/home/ira/.m2/repository/org/yaml/snakeyaml/1.33/snakeyaml-1.33.jar = 1763065894330
+/home/ira/.m2/repository/com/opencsv/opencsv/5.7.1/opencsv-5.7.1.jar = 1763065894082
+/home/ira/.m2/repository/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar = 1731435782235
+/home/ira/.m2/repository/org/apache/commons/commons-text/1.10.0/commons-text-1.10.0.jar = 1762705979814
+/home/ira/.m2/repository/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar = 1730149047981
+/home/ira/.m2/repository/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar = 1739221814111
+/home/ira/Documents/Y_LAB/product-catalog/src/main/java = 1763502497640
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/script.js = 1763595853522
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/overview-tree.html = 1763595853468
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/package-search-index.js = 1763595853488
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/stylesheet.css = 1763595853522
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/search.js = 1763595853523
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/constant-values.html = 1763595853398
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/overview-summary.html = 1763595853521
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/index.html = 1763595853470
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/member-search-index.js = 1763595853489
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/serialized-form.html = 1763595853403
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/allclasses-index.html = 1763595853487
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/tag-search-index.js = 1763595853489
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/type-search-index.js = 1763595853489
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/module-search-index.js = 1763595853488
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/element-list = 1763595853367
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/index-all.html = 1763595853520
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/allpackages-index.html = 1763595853488
+/home/ira/Documents/Y_LAB/product-catalog/target/apidocs/jquery-ui.overrides.css = 1763595853524

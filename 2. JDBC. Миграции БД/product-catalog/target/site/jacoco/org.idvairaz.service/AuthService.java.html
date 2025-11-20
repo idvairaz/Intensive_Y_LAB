@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.service</a> &gt; <span class="el_source">AuthService.java</span></div><h1>AuthService.java</h1><pre class="source lang-java linenums">package org.idvairaz.service;
+
+import org.idvairaz.model.User;
+import org.idvairaz.model.User.UserRole;
+
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Сервис аутентификации и авторизации пользователей.
+ * Управляет регистрацией, входом в систему и проверкой прав доступа.
+ *
+ * @author idvavraz
+ * @version 2.0
+ */
+public class AuthService {
+
+    /** Сервис для работы с пользователями */
+    private final UserService userService;
+
+    /** Текущий аутентифицированный пользователь */
+    private User currentUser;
+
+    /**
+     * Конструктор сервиса аутентификации.
+     *
+     * @param userService сервис для работы с пользователями
+     * */
+<span class="nc" id="L29">    public AuthService(UserService userService) {</span>
+<span class="nc" id="L30">        this.userService = userService;</span>
+<span class="nc" id="L31">        System.out.println(&quot;Сервис аутентификации инициализирован&quot;);</span>
+
+<span class="nc" id="L33">    }</span>
+
+    /**
+     * Выполняет вход пользователя в систему.
+     * Проверяет учетные данные и обновляет статус входа.
+     *
+     * @param username имя пользователя
+     * @param password пароль
+     * @return true если аутентификация успешна, false в противном случае
+     */
+    public boolean login(String username, String password) {
+<span class="nc" id="L44">        Optional&lt;User&gt; userOpt = userService.getUserByUsername(username);</span>
+
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (userOpt.isPresent()) {</span>
+<span class="nc" id="L47">            User user = userOpt.get();</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            if (user.getPassword().equals(password)) {</span>
+<span class="nc" id="L49">                user.setLoggedIn(true);</span>
+<span class="nc" id="L50">                userService.updateUser(user);</span>
+<span class="nc" id="L51">                currentUser = user;</span>
+<span class="nc" id="L52">                return true;</span>
+            }
+        }
+<span class="nc" id="L55">        return false;</span>
+    }
+
+    /**
+     * Регистрирует нового пользователя с указанной ролью.
+     *
+     * @param username имя пользователя
+     * @param password пароль
+     * @param role роль пользователя
+     * @return true если регистрация успешна, false если пользователь уже существует или данные некорректны
+     */
+    public boolean register(String username, String password, UserRole role) {
+        try {
+<span class="nc" id="L68">            userService.createUser(username, password, role);</span>
+<span class="nc" id="L69">            return true;</span>
+<span class="nc" id="L70">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L71">            System.out.println(&quot;Ошибка регистрации: &quot; + e.getMessage());</span>
+<span class="nc" id="L72">            return false;</span>
+        }
+    }
+
+    /**
+     * Регистрирует нового пользователя с ролью USER по умолчанию.
+     *
+     * @param username имя пользователя
+     * @param password пароль
+     * @return true если регистрация успешна, false если пользователь уже существует или данные некорректны
+     */
+    public boolean register(String username, String password) {
+<span class="nc" id="L84">        return register(username, password, UserRole.USER);</span>
+    }
+
+    /**
+     * Выполняет выход текущего пользователя из системы.
+     */
+    public void logout() {
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (currentUser != null) {</span>
+<span class="nc" id="L92">            currentUser.setLoggedIn(false);</span>
+<span class="nc" id="L93">            userService.updateUser(currentUser);</span>
+<span class="nc" id="L94">            currentUser = null;</span>
+        }
+<span class="nc" id="L96">    }</span>
+
+    /**
+     * Проверяет, выполнен ли вход в систему.
+     *
+     * @return true если пользователь аутентифицирован, false в противном случае
+     */
+    public boolean isAuthenticated() {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        return currentUser != null;</span>
+    }
+
+    /**
+     * Возвращает текущего аутентифицированного пользователя.
+     *
+     * @return Optional с текущим пользователем или empty если пользователь не аутентифицирован
+     */
+    public Optional&lt;User&gt; getCurrentUser() {
+<span class="nc" id="L113">        return Optional.ofNullable(currentUser);</span>
+    }
+
+    /**
+     * Возвращает имя текущего пользователя.
+     *
+     * @return имя аутентифицированного пользователя или &quot;Гость&quot; если пользователь не аутентифицирован
+     */
+    public String getCurrentUsername() {
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        return currentUser != null ? currentUser.getUsername() : &quot;Гость&quot;;</span>
+    }
+
+    /**
+     * Возвращает роль текущего пользователя.
+     *
+     * @return роль аутентифицированного пользователя или null если пользователь не аутентифицирован
+     */
+    public UserRole getCurrentUserRole() {
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        return currentUser != null ? currentUser.getRole() : null;</span>
+    }
+
+    /**
+     * Проверяет, может ли текущий пользователь управлять товарами.
+     *
+     * @return true если пользователь имеет права ADMIN или MANAGER
+     */
+    public boolean canManageProducts() {
+<span class="nc bnc" id="L140" title="All 4 branches missed.">        return currentUser != null &amp;&amp; currentUser.canManageProducts();</span>
+    }
+
+    /**
+     * Проверяет, может ли текущий пользователь просматривать журнал аудита.
+     *
+     * @return true если пользователь имеет права ADMIN или MANAGER
+     */
+    public boolean canViewAudit() {
+<span class="nc bnc" id="L149" title="All 4 branches missed.">        return currentUser != null &amp;&amp; currentUser.canViewAudit();</span>
+    }
+
+    /**
+     * Проверяет, является ли текущий пользователь администратором.
+     *
+     * @return true если пользователь имеет роль ADMIN
+     */
+    public boolean isAdmin() {
+<span class="nc bnc" id="L158" title="All 4 branches missed.">        return currentUser != null &amp;&amp; currentUser.isAdmin();</span>
+    }
+
+    /**
+     * Возвращает копию карты всех зарегистрированных пользователей.
+     *
+     * @return карта пользователей (имя -&gt; пользователь)
+     */
+    public Map&lt;String, User&gt; getUsers() {
+<span class="nc" id="L167">        return userService.getUsersMap();</span>
+    }
+
+    /**
+     * Регистрирует нового пользователя с указанной ролью (только для администраторов).
+     *
+     * @param username имя пользователя
+     * @param password пароль
+     * @param role роль пользователя
+     * @return true если регистрация успешна, false если пользователь уже существует или данные некорректны
+     */
+    public boolean registerWithRole(String username, String password, UserRole role) {
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (!isAdmin()) {</span>
+<span class="nc" id="L180">            System.out.println(&quot;Ошибка: только администратор может создавать пользователей с заданной ролью&quot;);</span>
+<span class="nc" id="L181">            return false;</span>
+        }
+
+<span class="nc" id="L184">        return register(username, password, role);</span>
+    }
+
+    /**
+     * Изменяет роль пользователя (только для администраторов).
+     *
+     * @param username имя пользователя
+     * @param newRole новая роль пользователя
+     * @return true если изменение успешно, false если пользователь не найден
+     */
+    public boolean changeUserRole(String username, UserRole newRole) {
+<span class="nc bnc" id="L195" title="All 2 branches missed.">        if (!isAdmin()) {</span>
+<span class="nc" id="L196">            System.out.println(&quot;Ошибка: только администратор может изменять роли пользователей&quot;);</span>
+<span class="nc" id="L197">            return false;</span>
+        }
+
+        try {
+<span class="nc" id="L201">            userService.updateUserRole(username, newRole);</span>
+<span class="nc" id="L202">            return true;</span>
+<span class="nc" id="L203">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L204">            System.out.println(&quot;Ошибка изменения роли: &quot; + e.getMessage());</span>
+<span class="nc" id="L205">            return false;</span>
+        }
+    }
+
+    /**
+     * Удаляет пользователя (только для администраторов).
+     *
+     * @param username имя пользователя для удаления
+     * @return true если удаление успешно, false если пользователь не найден
+     */
+    public boolean deleteUser(String username) {
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        if (!isAdmin()) {</span>
+<span class="nc" id="L217">            System.out.println(&quot;Ошибка: только администратор может удалять пользователей&quot;);</span>
+<span class="nc" id="L218">            return false;</span>
+        }
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        if (username.equals(getCurrentUsername())) {</span>
+<span class="nc" id="L222">            System.out.println(&quot;Ошибка: нельзя удалить самого себя&quot;);</span>
+<span class="nc" id="L223">            return false;</span>
+        }
+
+        try {
+<span class="nc" id="L227">            userService.deleteUserByName(username, getCurrentUsername());</span>
+<span class="nc" id="L228">            return true;</span>
+<span class="nc" id="L229">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L230">            System.out.println(&quot;Ошибка удаления пользователя: &quot; + e.getMessage());</span>
+<span class="nc" id="L231">            return false;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

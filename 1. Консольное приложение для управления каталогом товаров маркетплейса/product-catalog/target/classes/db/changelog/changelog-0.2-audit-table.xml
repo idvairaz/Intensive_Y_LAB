@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="0.2-1" author="idvavraz">
+        <comment>Create audit logs table</comment>
+        <createTable tableName="logs" schemaName="audit">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="details" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="0.2-2" author="idvavraz">
+        <comment>Create sequence for audit logs</comment>
+        <createSequence
+                sequenceName="audit_log_seq"
+                schemaName="audit"
+                startValue="1"
+                incrementBy="1"/>
+    </changeSet>
+
+    <changeSet id="0.2-3" author="idvavraz">
+        <comment>Create indexes for audit logs</comment>
+        <createIndex indexName="idx_audit_username" tableName="logs" schemaName="audit">
+            <column name="username"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_created_at" tableName="logs" schemaName="audit">
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_action" tableName="logs" schemaName="audit">
+            <column name="action"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

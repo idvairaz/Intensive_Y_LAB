@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PostgresProductRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.repository.impl</a> &gt; <span class="el_source">PostgresProductRepository.java</span></div><h1>PostgresProductRepository.java</h1><pre class="source lang-java linenums">package org.idvairaz.repository.impl;
+
+import org.idvairaz.config.DatabaseConfig;
+import org.idvairaz.model.Product;
+import org.idvairaz.repository.ProductRepository;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Реализация репозитория товаров для работы с PostgreSQL.
+ * Обеспечивает сохранение, поиск и управление товарами в базе данных.
+ * Использует JDBC для прямого взаимодействия с PostgreSQL.
+ * Идентификаторы товаров генерируются через sequence product_seq.
+ *
+ *  @author idvavraz
+ *  @version 1.0
+ */
+<span class="fc" id="L25">public class PostgresProductRepository implements ProductRepository {</span>
+
+    /** Имя схемы базы данных, используемой приложением */
+<span class="fc" id="L28">    private final String schema = DatabaseConfig.getSchema();</span>
+
+    /**
+     * Сохраняет или обновляет товар в базе данных.
+     * Для новых товаров (id = null) генерирует идентификатор через sequence product_seq.
+     * Для существующих товаров обновляет все поля, кроме created_at.
+     *
+     * @param product товар для сохранения или обновления
+     * @return сохраненный товар с присвоенным ID (для новых) или обновленными данными
+     * @throws RuntimeException если произошла ошибка SQL или товар для обновления не найден
+     */
+     @Override
+    public Product save(Product product) {
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        boolean isNew = product.getId() == null;</span>
+        String sql;
+
+<span class="fc" id="L44">        try (Connection conn = DatabaseConfig.getConnection()) {</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">            if (isNew) {</span>
+<span class="fc" id="L46">                long newId = getNextIdFromSequence(conn);</span>
+<span class="fc" id="L47">                product.setId(newId);</span>
+
+<span class="fc" id="L49">                sql = &quot;INSERT INTO &quot; + schema + &quot;.products (id, name, description, price, category, brand, stock_quantity, created_at, updated_at) &quot; +</span>
+                        &quot;VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)&quot;;
+<span class="fc" id="L51">            } else {</span>
+<span class="fc" id="L52">                sql = &quot;UPDATE &quot; + schema + &quot;.products SET name = ?, description = ?, price = ?, category = ?, brand = ?, stock_quantity = ?, updated_at = ? &quot; +</span>
+                        &quot;WHERE id = ?&quot;;
+            }
+
+<span class="fc" id="L56">            try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">                if (isNew) {</span>
+<span class="fc" id="L58">                    stmt.setLong(1, product.getId());</span>
+<span class="fc" id="L59">                    stmt.setString(2, product.getName());</span>
+<span class="fc" id="L60">                    stmt.setString(3, product.getDescription());</span>
+<span class="fc" id="L61">                    stmt.setBigDecimal(4, product.getPrice());</span>
+<span class="fc" id="L62">                    stmt.setString(5, product.getCategory());</span>
+<span class="fc" id="L63">                    stmt.setString(6, product.getBrand());</span>
+<span class="fc" id="L64">                    stmt.setInt(7, product.getStockQuantity());</span>
+<span class="fc" id="L65">                    stmt.setTimestamp(8, Timestamp.valueOf(product.getCreatedAt()));</span>
+<span class="fc" id="L66">                    stmt.setTimestamp(9, Timestamp.valueOf(product.getUpdatedAt()));</span>
+                } else {
+<span class="fc" id="L68">                    stmt.setString(1, product.getName());</span>
+<span class="fc" id="L69">                    stmt.setString(2, product.getDescription());</span>
+<span class="fc" id="L70">                    stmt.setBigDecimal(3, product.getPrice());</span>
+<span class="fc" id="L71">                    stmt.setString(4, product.getCategory());</span>
+<span class="fc" id="L72">                    stmt.setString(5, product.getBrand());</span>
+<span class="fc" id="L73">                    stmt.setInt(6, product.getStockQuantity());</span>
+<span class="fc" id="L74">                    stmt.setTimestamp(7, Timestamp.valueOf(product.getUpdatedAt()));</span>
+<span class="fc" id="L75">                    stmt.setLong(8, product.getId());</span>
+                }
+
+<span class="fc" id="L78">                int affectedRows = stmt.executeUpdate();</span>
+
+<span class="fc bfc" id="L80" title="All 2 branches covered.">                if (isNew) {</span>
+<span class="fc" id="L81">                    System.out.println(&quot;Создан товар с ID: &quot; + product.getId() + &quot; (из sequence)&quot;);</span>
+<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                } else if (affectedRows == 0) {</span>
+<span class="nc" id="L83">                    throw new RuntimeException(&quot;Товар с ID &quot; + product.getId() + &quot; не найден для обновления&quot;);</span>
+                }
+
+<span class="fc" id="L86">                return product;</span>
+            }
+
+<span class="nc" id="L89">        } catch (SQLException e) {</span>
+<span class="nc" id="L90">            throw new RuntimeException(&quot;Ошибка сохранения товара '&quot; + product.getName() + &quot;'&quot;, e);</span>
+        }
+    }
+
+    /**
+     * Получает следующий идентификатор из sequence product_seq.
+     * Используется для генерации уникальных ID новых товаров.
+     *
+     * @param conn активное соединение с базой данных
+     * @return следующий уникальный идентификатор из sequence
+     * @throws SQLException если произошла ошибка при обращении к sequence
+     *
+     */
+    private long getNextIdFromSequence(Connection conn) throws SQLException {
+<span class="fc" id="L104">        String sequenceSql = &quot;SELECT nextval('&quot; + schema + &quot;.product_seq')&quot;;</span>
+<span class="fc" id="L105">        try (PreparedStatement seqStmt = conn.prepareStatement(sequenceSql);</span>
+<span class="fc" id="L106">             ResultSet rs = seqStmt.executeQuery()) {</span>
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">            if (rs.next()) {</span>
+<span class="fc" id="L108">                return rs.getLong(1);</span>
+            } else {
+<span class="nc" id="L110">                throw new SQLException(&quot;Не удалось получить значение из sequence product_seq&quot;);</span>
+            }
+        }
+    }
+
+    /**
+     * Находит товар по его идентификатору.
+     *
+     * @param id идентификатор товара для поиска
+     * @return Optional с найденным товаром, или empty если товар не найден
+     * @throws RuntimeException если произошла ошибка при выполнении запроса
+     */
+    @Override
+    public Optional&lt;Product&gt; findById(Long id) {
+<span class="fc" id="L124">        String sql = &quot;SELECT * FROM &quot; + schema + &quot;.products WHERE id = ?&quot;;</span>
+
+<span class="fc" id="L126">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="fc" id="L127">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L129">            stmt.setLong(1, id);</span>
+<span class="fc" id="L130">            ResultSet rs = stmt.executeQuery();</span>
+
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            if (rs.next()) {</span>
+<span class="fc" id="L133">                return Optional.of(mapResultSetToProduct(rs));</span>
+            }
+
+<span class="pc bpc" id="L136" title="2 of 4 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L137">            throw new RuntimeException(&quot;Ошибка поиска товара по ID: &quot; + id, e);</span>
+<span class="fc" id="L138">        }</span>
+
+<span class="fc" id="L140">        return Optional.empty();</span>
+    }
+
+    /**
+     * Находит товар по точному совпадению названия без учета регистра.
+     *
+     * @param name название товара для поиска
+     * @return Optional с найденным товаром, или empty если товар не найден
+     * @throws RuntimeException если произошла ошибка при выполнении запроса
+     */
+    @Override
+    public Optional&lt;Product&gt; findByName(String name) {
+<span class="fc" id="L152">        String sql = &quot;SELECT * FROM &quot; + schema + &quot;.products WHERE LOWER(name) = LOWER(?)&quot;;</span>
+
+<span class="fc" id="L154">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="fc" id="L155">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L157">            stmt.setString(1, name);</span>
+<span class="fc" id="L158">            ResultSet rs = stmt.executeQuery();</span>
+
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">            if (rs.next()) {</span>
+<span class="fc" id="L161">                return Optional.of(mapResultSetToProduct(rs));</span>
+            }
+
+<span class="pc bpc" id="L164" title="2 of 4 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L165">            throw new RuntimeException(&quot;Ошибка поиска товара по имени: &quot; + name, e);</span>
+<span class="nc" id="L166">        }</span>
+
+<span class="nc" id="L168">        return Optional.empty();</span>
+    }
+
+    /**
+     * Возвращает все товары из базы данных.
+     * Товары возвращаются в порядке их идентификаторов.
+     *
+     * @return список всех товаров, может быть пустым если товаров нет
+     * @throws RuntimeException если произошла ошибка при выполнении запроса
+     */
+    @Override
+    public List&lt;Product&gt; findAll() {
+<span class="fc" id="L180">        List&lt;Product&gt; products = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L181">        String sql = &quot;SELECT * FROM &quot; + schema + &quot;.products ORDER BY id&quot;;</span>
+
+<span class="fc" id="L183">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="fc" id="L184">             PreparedStatement stmt = conn.prepareStatement(sql);</span>
+<span class="fc" id="L185">             ResultSet rs = stmt.executeQuery()) {</span>
+
+<span class="fc bfc" id="L187" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L188">                products.add(mapResultSetToProduct(rs));</span>
+            }
+
+<span class="nc" id="L191">        } catch (SQLException e) {</span>
+<span class="nc" id="L192">            throw new RuntimeException(&quot;Ошибка получения всех товаров&quot;, e);</span>
+<span class="fc" id="L193">        }</span>
+
+<span class="fc" id="L195">        return products;</span>
+    }
+
+    /**
+     * Удаляет товар по идентификатору.
+     * Если товар с указанным ID не существует, метод не генерирует исключениеоперация, а операция считается успешной
+     * и выводится информационное сообщение.
+     *
+     * @param id идентификатор товара для удаления
+     * @throws RuntimeException если произошла ошибка при выполнении SQL запроса
+     */
+    @Override
+    public void delete(Long id) {
+<span class="fc" id="L208">        String sql = &quot;DELETE FROM &quot; + schema + &quot;.products WHERE id = ?&quot;;</span>
+
+<span class="fc" id="L210">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="fc" id="L211">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L213">            stmt.setLong(1, id);</span>
+<span class="fc" id="L214">            int affectedRows = stmt.executeUpdate();</span>
+
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">            if (affectedRows == 0) {</span>
+<span class="nc" id="L217">                System.out.println(&quot;Товар с ID &quot; + id + &quot; не найден для удаления&quot;);</span>
+            } else {
+<span class="fc" id="L219">                System.out.println(&quot;Товар с ID &quot; + id + &quot; удален&quot;);</span>
+            }
+
+<span class="nc" id="L222">        } catch (SQLException e) {</span>
+<span class="nc" id="L223">            throw new RuntimeException(&quot;Ошибка удаления товара с ID: &quot; + id, e);</span>
+<span class="fc" id="L224">        }</span>
+<span class="fc" id="L225">    }</span>
+
+    /**
+     * Находит все товары указанной категории.
+     * Поиск выполняется без учета регистра.
+     *
+     * @param category категория для поиска
+     * @return список товаров указанной категории, может быть пустым
+     * @throws RuntimeException если произошла ошибка при выполнении запроса
+     */
+    @Override
+    public List&lt;Product&gt; findByCategory(String category) {
+<span class="fc" id="L237">        List&lt;Product&gt; products = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L238">        String sql = &quot;SELECT * FROM &quot; + schema + &quot;.products WHERE LOWER(category) = LOWER(?) ORDER BY name&quot;;</span>
+
+<span class="fc" id="L240">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="fc" id="L241">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+
+<span class="fc" id="L243">            stmt.setString(1, category);</span>
+<span class="fc" id="L244">            ResultSet rs = stmt.executeQuery();</span>
+
+<span class="fc bfc" id="L246" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L247">                products.add(mapResultSetToProduct(rs));</span>
+            }
+
+<span class="nc" id="L250">        } catch (SQLException e) {</span>
+<span class="nc" id="L251">            throw new RuntimeException(&quot;Ошибка поиска товаров по категории: &quot; + category, e);</span>
+<span class="fc" id="L252">        }</span>
+
+<span class="fc" id="L254">        return products;</span>
+    }
+
+    /**
+     * Находит все товары указанного бренда.
+     * Поиск выполняется без учета регистра.
+     *
+     * @param brand бренд для поиска
+     * @return список товаров указанного бренда, может быть пустым
+     * @throws RuntimeException если произошла ошибка при выполнении SQL запроса
+     */
+    @Override
+    public List&lt;Product&gt; findByBrand(String brand) {
+<span class="nc" id="L267">        List&lt;Product&gt; products = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L268">        String sql = &quot;SELECT * FROM &quot; + schema + &quot;.products WHERE LOWER(brand) = LOWER(?) ORDER BY name&quot;;</span>
+
+<span class="nc" id="L270">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="nc" id="L271">             PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+
+<span class="nc" id="L273">            stmt.setString(1, brand);</span>
+<span class="nc" id="L274">            ResultSet rs = stmt.executeQuery();</span>
+
+<span class="nc bnc" id="L276" title="All 2 branches missed.">            while (rs.next()) {</span>
+<span class="nc" id="L277">                products.add(mapResultSetToProduct(rs));</span>
+            }
+
+<span class="nc" id="L280">        } catch (SQLException e) {</span>
+<span class="nc" id="L281">            throw new RuntimeException(&quot;Ошибка поиска товаров по бренду: &quot; + brand, e);</span>
+<span class="nc" id="L282">        }</span>
+
+<span class="nc" id="L284">        return products;</span>
+    }
+
+    /**
+     * Возвращает общее количество товаров в каталоге.
+     *
+     * @return количество товаров
+     * @throws RuntimeException если произошла ошибка при выполнении запроса
+     */
+    @Override
+    public int getTotalProductsCount() {
+<span class="fc" id="L295">        String sql = &quot;SELECT COUNT(*) FROM &quot; + schema + &quot;.products&quot;;</span>
+
+<span class="fc" id="L297">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="fc" id="L298">             PreparedStatement stmt = conn.prepareStatement(sql);</span>
+<span class="fc" id="L299">             ResultSet rs = stmt.executeQuery()) {</span>
+
+<span class="pc bpc" id="L301" title="1 of 2 branches missed.">            if (rs.next()) {</span>
+<span class="fc" id="L302">                return rs.getInt(1);</span>
+            }
+
+<span class="pc bpc" id="L305" title="3 of 6 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L306">            throw new RuntimeException(&quot;Ошибка получения общего количества товаров&quot;, e);</span>
+<span class="nc" id="L307">        }</span>
+
+<span class="nc" id="L309">        return 0;</span>
+    }
+
+    /**
+     * Возвращает количество уникальных категорий в каталоге.
+     *
+     * @return количество категорий
+     * @throws RuntimeException если произошла ошибка при выполнении SQL запроса
+     */
+    @Override
+    public int getTotalCategoriesCount() {
+<span class="nc" id="L320">        String sql = &quot;SELECT COUNT(DISTINCT category) FROM &quot; + schema + &quot;.products&quot;;</span>
+
+<span class="nc" id="L322">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="nc" id="L323">             PreparedStatement stmt = conn.prepareStatement(sql);</span>
+<span class="nc" id="L324">             ResultSet rs = stmt.executeQuery()) {</span>
+
+<span class="nc bnc" id="L326" title="All 2 branches missed.">            if (rs.next()) {</span>
+<span class="nc" id="L327">                return rs.getInt(1);</span>
+            }
+
+<span class="nc bnc" id="L330" title="All 6 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L331">            throw new RuntimeException(&quot;Ошибка получения количества категорий&quot;, e);</span>
+<span class="nc" id="L332">        }</span>
+
+<span class="nc" id="L334">        return 0;</span>
+    }
+
+    /**
+     * Возвращает количество уникальных брендов в каталоге.
+     *
+     * @return количество брендов
+     * @throws RuntimeException если произошла ошибка при выполнении SQL запроса
+     */
+    @Override
+    public int getTotalBrandsCount() {
+<span class="nc" id="L345">        String sql = &quot;SELECT COUNT(DISTINCT brand) FROM &quot; + schema + &quot;.products&quot;;</span>
+
+<span class="nc" id="L347">        try (Connection conn = DatabaseConfig.getConnection();</span>
+<span class="nc" id="L348">             PreparedStatement stmt = conn.prepareStatement(sql);</span>
+<span class="nc" id="L349">             ResultSet rs = stmt.executeQuery()) {</span>
+
+<span class="nc bnc" id="L351" title="All 2 branches missed.">            if (rs.next()) {</span>
+<span class="nc" id="L352">                return rs.getInt(1);</span>
+            }
+
+<span class="nc bnc" id="L355" title="All 6 branches missed.">        } catch (SQLException e) {</span>
+<span class="nc" id="L356">            throw new RuntimeException(&quot;Ошибка получения количества брендов&quot;, e);</span>
+<span class="nc" id="L357">        }</span>
+
+<span class="nc" id="L359">        return 0;</span>
+    }
+
+    /**
+     * Преобразует ResultSet в объект Product.
+     * Вспомогательный метод для маппинга данных из базы в Java-объект.
+     *
+     * @param rs ResultSet с данными товара
+     * @return объект Product с данными из ResultSet
+     * @throws SQLException если произошла ошибка при чтении данных из ResultSet
+     *
+     *  Метод не перемещает курсор ResultSet, вызывающий код должен
+     * убедиться что rs.next() был вызван и вернул true
+     */
+    private Product mapResultSetToProduct(ResultSet rs) throws SQLException {
+<span class="fc" id="L374">        Product product = new Product();</span>
+<span class="fc" id="L375">        product.setId(rs.getLong(&quot;id&quot;));</span>
+<span class="fc" id="L376">        product.setName(rs.getString(&quot;name&quot;));</span>
+<span class="fc" id="L377">        product.setDescription(rs.getString(&quot;description&quot;));</span>
+<span class="fc" id="L378">        product.setPrice(rs.getBigDecimal(&quot;price&quot;));</span>
+<span class="fc" id="L379">        product.setCategory(rs.getString(&quot;category&quot;));</span>
+<span class="fc" id="L380">        product.setBrand(rs.getString(&quot;brand&quot;));</span>
+<span class="fc" id="L381">        product.setStockQuantity(rs.getInt(&quot;stock_quantity&quot;));</span>
+<span class="fc" id="L382">        product.setCreatedAt(rs.getTimestamp(&quot;created_at&quot;).toLocalDateTime());</span>
+<span class="fc" id="L383">        product.setUpdatedAt(rs.getTimestamp(&quot;updated_at&quot;).toLocalDateTime());</span>
+<span class="fc" id="L384">        return product;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

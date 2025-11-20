@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuditService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.service</a> &gt; <span class="el_source">AuditService.java</span></div><h1>AuditService.java</h1><pre class="source lang-java linenums">package org.idvairaz.service;
+
+import org.idvairaz.repository.AuditRepository;
+import java.util.List;
+
+/**
+ * Сервис для ведения журнала аудита действий пользователей.
+ * Использует репозиторий для сохранения записей в базу данных PostgreSQL.
+ *
+ * @author idvavraz
+ * @version 2.0
+ */
+public class AuditService {
+
+    /** Репозиторий для работы с записями аудита */
+    private final AuditRepository auditRepository;
+
+    /**
+     * Конструктор сервиса аудита.
+     *
+     * @param auditRepository репозиторий для работы с записями аудита
+     */
+<span class="nc" id="L23">    public AuditService(AuditRepository auditRepository) {</span>
+<span class="nc" id="L24">        this.auditRepository = auditRepository;</span>
+<span class="nc" id="L25">        System.out.println(&quot;Сервис аудита инициализирован с репозиторием PostgreSQL&quot;);</span>
+<span class="nc" id="L26">    }</span>
+
+    /**
+     * Записывает действие пользователя в журнал аудита.
+     * Сохраняет запись в базу данных через репозиторий.
+     * Также выводит запись в консоль для немедленного отображения.
+     *
+     * @param username имя пользователя, выполнившего действие
+     * @param action тип выполненного действия
+     * @param details дополнительные детали действия
+     */
+    public void logAction(String username, String action, String details) {
+<span class="nc" id="L38">        auditRepository.save(username, action, details);</span>
+
+<span class="nc" id="L40">        String timestamp = java.time.LocalDateTime.now().toString();</span>
+<span class="nc" id="L41">        String logEntry = String.format(&quot;[%s] Пользователь: %s | Действие: %s | Детали: %s&quot;,</span>
+                timestamp, username, action, details);
+<span class="nc" id="L43">        System.out.println(&quot; - &quot; + logEntry);</span>
+<span class="nc" id="L44">    }</span>
+
+    /**
+     * Отображает весь журнал аудита из базы данных.
+     * Записи отображаются в порядке от новых к старым.
+     * Если журнал пуст, выводит соответствующее сообщение.
+     */
+    public void showAuditLog() {
+<span class="nc" id="L52">        System.out.println(&quot;\n=== ЖУРНАЛ АУДИТА (ИЗ БАЗЫ ДАННЫХ) ===&quot;);</span>
+<span class="nc" id="L53">        List&lt;String&gt; auditLog = auditRepository.findAll();</span>
+
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (auditLog.isEmpty()) {</span>
+<span class="nc" id="L56">            System.out.println(&quot;Журнал аудита пуст&quot;);</span>
+        } else {
+<span class="nc" id="L58">            System.out.println(&quot;Всего записей: &quot; + auditLog.size());</span>
+<span class="nc" id="L59">            auditLog.forEach(System.out::println);</span>
+        }
+<span class="nc" id="L61">    }</span>
+
+    /**
+     * Очищает весь журнал аудита в базе данных.
+     * Используется для обслуживания системы.
+     */
+    public void clearAuditLog() {
+<span class="nc" id="L68">        auditRepository.clear();</span>
+<span class="nc" id="L69">        System.out.println(&quot;Журнал аудита очищен&quot;);</span>
+<span class="nc" id="L70">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="0.1-1" author="idvavraz">
+        <comment>Create audit schema for service tables</comment>
+        <sql>CREATE SCHEMA IF NOT EXISTS audit;</sql>
+    </changeSet>
+
+</databaseChangeLog>

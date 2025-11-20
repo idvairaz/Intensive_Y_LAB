@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthMenu.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.menu</a> &gt; <span class="el_source">AuthMenu.java</span></div><h1>AuthMenu.java</h1><pre class="source lang-java linenums">package org.idvairaz.menu;
+
+import org.idvairaz.service.AuditService;
+import org.idvairaz.service.AuthService;
+
+
+import java.util.Scanner;
+
+/**
+ * Меню аутентификации и регистрации пользователей.
+ * Отвечает за процессы входа, регистрации и управления сессиями.
+ *
+ * @author idvavraz
+ * @version 1.0
+ */
+public class AuthMenu {
+
+    /** Сервис аутентификации и авторизации */
+    private final AuthService authService;
+
+    /** Сервис для ведения журнала аудита */
+    private final AuditService auditService;
+
+    /** Сканер для ввода данных от пользователя */
+    private final Scanner scanner;
+
+    /**
+     * Конструктор меню аутентификации.
+     *
+     * @param authService сервис аутентификации и авторизации
+     * @param auditService сервис для ведения журнала аудита
+     * @param scanner сканер для ввода данных от пользователя
+<span class="nc" id="L33">     */public AuthMenu(AuthService authService, AuditService auditService, Scanner scanner) {</span>
+<span class="nc" id="L34">        this.authService = authService;</span>
+<span class="nc" id="L35">        this.auditService = auditService;</span>
+<span class="nc" id="L36">        this.scanner = scanner;</span>
+<span class="nc" id="L37">    }</span>
+
+    /**
+     * Отображает меню авторизации до успешного входа в систему.
+     */
+    public void showAuthMenu() {
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        while (!authService.isAuthenticated()) {</span>
+<span class="nc" id="L44">            System.out.println(&quot;\n=== МЕНЮ АВТОРИЗАЦИИ ===&quot;);</span>
+<span class="nc" id="L45">            System.out.println(&quot;1. Войти&quot;);</span>
+<span class="nc" id="L46">            System.out.println(&quot;2. Зарегистрироваться&quot;);</span>
+<span class="nc" id="L47">            System.out.println(&quot;3. Выйти из приложения&quot;);</span>
+<span class="nc" id="L48">            System.out.print(&quot;Выберите действие: &quot;);</span>
+
+<span class="nc" id="L50">            int choice = readChoice();</span>
+<span class="nc" id="L51">            processAuthChoice(choice);</span>
+<span class="nc" id="L52">        }</span>
+<span class="nc" id="L53">    }</span>
+
+    /**
+     * Обрабатывает выбор пользователя в меню авторизации.
+     *
+     * @param choice выбранный пункт меню
+     */
+    private void processAuthChoice(int choice) {
+<span class="nc bnc" id="L61" title="All 4 branches missed.">        switch (choice) {</span>
+<span class="nc" id="L62">            case 1 -&gt; login();</span>
+<span class="nc" id="L63">            case 2 -&gt; register();</span>
+            case 3 -&gt; {
+<span class="nc" id="L65">                System.out.println(&quot;Выход из приложения.&quot;);</span>
+<span class="nc" id="L66">                System.exit(0);</span>
+<span class="nc" id="L67">            }</span>
+<span class="nc" id="L68">            default -&gt; System.out.println(&quot;Неверный выбор! Попробуйте снова.&quot;);</span>
+        }
+<span class="nc" id="L70">    }</span>
+
+    /**
+     * Выполняет процесс входа пользователя в систему.
+     * Предоставляет 3 попытки для ввода правильных учетных данных.
+     */
+    private void login() {
+<span class="nc" id="L77">        System.out.println(&quot;\n=== ВХОД В СИСТЕМУ ===&quot;);</span>
+<span class="nc" id="L78">        int attempts = 3;</span>
+
+<span class="nc bnc" id="L80" title="All 4 branches missed.">        while (attempts &gt; 0 &amp;&amp; !authService.isAuthenticated()) {</span>
+<span class="nc" id="L81">            System.out.print(&quot;Логин: &quot;);</span>
+<span class="nc" id="L82">            String username = scanner.nextLine();</span>
+
+<span class="nc" id="L84">            System.out.print(&quot;Пароль: &quot;);</span>
+<span class="nc" id="L85">            String password = scanner.nextLine();</span>
+
+<span class="nc bnc" id="L87" title="All 2 branches missed.">            if (authService.login(username, password)) {</span>
+<span class="nc" id="L88">                auditService.logAction(username, &quot;ВХОД&quot;, &quot;Успешная авторизация&quot;);</span>
+<span class="nc" id="L89">                System.out.println(&quot;Добро пожаловать, &quot; + username + &quot;!&quot;);</span>
+            } else {
+<span class="nc" id="L91">                attempts--;</span>
+<span class="nc" id="L92">                System.out.println(&quot;Неверный логин или пароль. Осталось попыток: &quot; + attempts);</span>
+<span class="nc" id="L93">                auditService.logAction(username, &quot;НЕУДАЧНАЯ_ПОПЫТКА_ВХОДА&quot;, &quot;Неверные учетные данные&quot;);</span>
+            }
+<span class="nc" id="L95">        }</span>
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (!authService.isAuthenticated()) {</span>
+<span class="nc" id="L98">            System.out.println(&quot;Превышено количество попыток. Попробуйте позже.&quot;);</span>
+        }
+<span class="nc" id="L100">    }</span>
+
+    /**
+     * Выполняет процесс регистрации нового пользователя.
+     */
+    private void register() {
+<span class="nc" id="L106">        System.out.println(&quot;\n=== РЕГИСТРАЦИЯ ===&quot;);</span>
+
+<span class="nc" id="L108">        System.out.print(&quot;Придумайте логин: &quot;);</span>
+<span class="nc" id="L109">        String username = scanner.nextLine();</span>
+
+<span class="nc" id="L111">        System.out.print(&quot;Придумайте пароль: &quot;);</span>
+<span class="nc" id="L112">        String password = scanner.nextLine();</span>
+
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (authService.register(username, password)) {</span>
+<span class="nc" id="L115">            System.out.println(&quot;Регистрация успешна! Теперь вы можете войти в систему.&quot;);</span>
+<span class="nc" id="L116">            auditService.logAction(username, &quot;РЕГИСТРАЦИЯ&quot;, &quot;Новый пользователь зарегистрирован&quot;);</span>
+        } else {
+<span class="nc" id="L118">            System.out.println(&quot;Ошибка регистрации. Возможно, пользователь с таким логином уже существует.&quot;);</span>
+<span class="nc" id="L119">            auditService.logAction(username, &quot;НЕУДАЧНАЯ_РЕГИСТРАЦИЯ&quot;, &quot;Попытка создать существующего пользователя&quot;);</span>
+        }
+<span class="nc" id="L121">    }</span>
+
+    /**
+     * Читает выбор пользователя из консоли.
+     *
+     * @return числовой выбор пользователя или -1 при ошибке
+     */
+    public int readChoice() {
+        try {
+<span class="nc" id="L130">            return scanner.nextInt();</span>
+<span class="nc" id="L131">        } catch (Exception e) {</span>
+<span class="nc" id="L132">            scanner.nextLine();</span>
+<span class="nc" id="L133">            return -1;</span>
+        } finally {
+<span class="nc" id="L135">            scanner.nextLine();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

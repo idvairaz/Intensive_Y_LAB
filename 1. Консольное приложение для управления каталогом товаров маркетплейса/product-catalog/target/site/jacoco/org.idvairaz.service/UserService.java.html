@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package org.idvairaz.service;
+
+import org.idvairaz.model.User;
+import org.idvairaz.model.User.UserRole;
+import org.idvairaz.repository.UserRepository;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * Сервис для управления пользователями.
+ * Содержит бизнес-логику работы с пользователями и взаимодействует с PostgreSQL.
+ *
+ * @author idvavraz
+ * @version 1.0
+ */
+
+public class UserService {
+
+    /** Репозиторий для работы с пользователями */
+    private final UserRepository userRepository;
+
+    /**
+     * Конструктор сервиса пользователей.
+     *
+     * @param userRepository репозиторий для работы с пользователями
+     */
+<span class="nc" id="L30">    public UserService(UserRepository userRepository) {</span>
+<span class="nc" id="L31">        this.userRepository = userRepository;</span>
+<span class="nc" id="L32">        System.out.println(&quot;Сервис пользователей инициализирован. Пользователей в базе: &quot; +</span>
+<span class="nc" id="L33">                userRepository.getTotalUsersCount());</span>
+<span class="nc" id="L34">    }</span>
+
+    /**
+     * Создает нового пользователя в базе данных.
+     * ID пользователя генерируется через sequence user_seq.
+     *
+     * @param username имя пользователя (должно быть уникальным)
+     * @param password пароль пользователя
+     * @param role роль пользователя в системе
+     * @return созданный пользователь
+     * @throws IllegalArgumentException если пользователь с таким именем уже существует или данные некорректны
+     * @throws RuntimeException если произошла ошибка при сохранении в базу данных
+     */
+    public User createUser(String username, String password, UserRole role) {
+<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (userRepository.existsByUsername(username)) {</span>
+<span class="nc" id="L49">            throw new IllegalArgumentException(&quot;Пользователь с именем '&quot; + username + &quot;' уже существует&quot;);</span>
+        }
+
+<span class="nc" id="L52">        validateUserCredentials(username, password);</span>
+
+<span class="nc" id="L54">        User newUser = User.builder()</span>
+<span class="nc" id="L55">                .username(username.trim())</span>
+<span class="nc" id="L56">                .password(password.trim())</span>
+<span class="nc" id="L57">                .role(role)</span>
+<span class="nc" id="L58">                .isLoggedIn(false)</span>
+<span class="nc" id="L59">                .build();</span>
+
+<span class="nc" id="L61">        return userRepository.save(newUser);</span>
+    }
+
+    /**
+     * Обновляет роль пользователя в системе.
+     *
+     * @param username имя пользователя для обновления
+     * @param newRole новая роль пользователя
+     * @return обновленный пользователь
+     * @throws IllegalArgumentException если пользователь не найден
+     * @throws RuntimeException если произошла ошибка при обновлении в базе данных
+     */
+    public User updateUserRole(String username, UserRole newRole) {
+<span class="nc" id="L74">        Optional&lt;User&gt; userOpt = userRepository.findByUsername(username);</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (userOpt.isEmpty()) {</span>
+<span class="nc" id="L76">            throw new IllegalArgumentException(&quot;Пользователь '&quot; + username + &quot;' не найден&quot;);</span>
+        }
+
+<span class="nc" id="L79">        User user = userOpt.get();</span>
+<span class="nc" id="L80">        user.setRole(newRole);</span>
+<span class="nc" id="L81">        return userRepository.save(user);</span>
+    }
+
+    /**
+     * Удаляет пользователя по имени пользователя.
+     *
+     * @param username имя пользователя для удаления
+     * @param currentUsername имя текущего пользователя (для проверки самоссылки)
+     * @throws IllegalArgumentException если пользователь не найден или попытка удалить самого себя
+     * @throws RuntimeException если произошла ошибка при удалении из базы данных
+     */
+    public void deleteUserByName(String username, String currentUsername) {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (username.equals(currentUsername)) {</span>
+<span class="nc" id="L94">            throw new IllegalArgumentException(&quot;Нельзя удалить самого себя&quot;);</span>
+        }
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (!userRepository.existsByUsername(username)) {</span>
+<span class="nc" id="L98">            throw new IllegalArgumentException(&quot;Пользователь '&quot; + username + &quot;' не найден&quot;);</span>
+        }
+
+<span class="nc" id="L101">        userRepository.deleteByUsername(username);</span>
+<span class="nc" id="L102">    }</span>
+
+    /**
+     * Удаляет пользователя по ID.
+     *
+     * @param userId ID пользователя для удаления
+     * @param currentUserId ID текущего пользователя
+     * @throws IllegalArgumentException если пользователь не найден или попытка удалить самого себя
+     * @throws RuntimeException если произошла ошибка при удалении из базы данных
+     */
+    public void deleteUserById(Long userId, Long currentUserId) {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (userId.equals(currentUserId)) {</span>
+<span class="nc" id="L114">            throw new IllegalArgumentException(&quot;Нельзя удалить самого себя&quot;);</span>
+        }
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        if (!userRepository.existsById(userId)) {</span>
+<span class="nc" id="L118">            throw new IllegalArgumentException(&quot;Пользователь с ID '&quot; + userId + &quot;' не найден&quot;);</span>
+        }
+
+<span class="nc" id="L121">        userRepository.deleteById(userId);</span>
+<span class="nc" id="L122">    }</span>
+
+    /**
+     * Находит пользователя по имени пользователя.
+     *
+     * @param username имя пользователя для поиска
+     * @return Optional с найденным пользователем или empty если не найден
+     * @throws RuntimeException если произошла ошибка при поиске в базе данных
+     */
+    public Optional&lt;User&gt; getUserByUsername(String username) {
+<span class="nc" id="L132">        return userRepository.findByUsername(username);</span>
+    }
+
+    /**
+     * Возвращает всех пользователей системы.
+     *
+     * @return список всех пользователей, отсортированный по имени
+     * @throws RuntimeException если произошла ошибка при получении данных из базы
+     */
+    public List&lt;User&gt; getAllUsers() {
+<span class="nc" id="L142">        return userRepository.findAll();</span>
+    }
+
+    /**
+     * Возвращает пользователей в виде карты для быстрого поиска по имени.
+     *
+     * @return карта пользователей (имя пользователя -&gt; объект User)
+     * @throws RuntimeException если произошла ошибка при получении данных из базы
+     */
+    public Map&lt;String, User&gt; getUsersMap() {
+<span class="nc" id="L152">        return userRepository.findAll().stream()</span>
+<span class="nc" id="L153">                .collect(Collectors.toMap(User::getUsername, user -&gt; user));</span>
+    }
+
+    /**
+     * Проверяет существование пользователя с указанным именем.
+     *
+     * @param username имя пользователя для проверки
+     * @return true если пользователь существует, false в противном случае
+     * @throws RuntimeException если произошла ошибка при проверке в базе данных
+     */
+    public boolean userExists(String username) {
+<span class="nc" id="L164">        return userRepository.existsByUsername(username);</span>
+    }
+
+    /**
+     * Возвращает общее количество пользователей в системе.
+     *
+     * @return количество пользователей
+     * @throws RuntimeException если произошла ошибка при подсчете в базе данных
+     */
+    public int getUserCount() {
+<span class="nc" id="L174">        return userRepository.getTotalUsersCount();</span>
+    }
+
+    /**
+     * Обновляет информацию о пользователе в базе данных.
+     *
+     * @param user пользователь для обновления
+     * @return обновленный пользователь
+     * @throws RuntimeException если произошла ошибка при обновлении в базе данных
+     */
+    public User updateUser(User user) {
+<span class="nc" id="L185">        return userRepository.save(user);</span>
+    }
+
+    /**
+     * Валидирует учетные данные пользователя.
+     *
+     * @param username имя пользователя
+     * @param password пароль
+     * @throws IllegalArgumentException если данные некорректны
+     */
+    private void validateUserCredentials(String username, String password) {
+<span class="nc bnc" id="L196" title="All 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
+<span class="nc" id="L197">            throw new IllegalArgumentException(&quot;Имя пользователя не может быть пустым&quot;);</span>
+        }
+
+<span class="nc bnc" id="L200" title="All 4 branches missed.">        if (password == null || password.trim().isEmpty()) {</span>
+<span class="nc" id="L201">            throw new IllegalArgumentException(&quot;Пароль не может быть пустым&quot;);</span>
+        }
+
+<span class="nc bnc" id="L204" title="All 2 branches missed.">        if (username.length() &lt; 3) {</span>
+<span class="nc" id="L205">            throw new IllegalArgumentException(&quot;Имя пользователя должно содержать минимум 3 символа&quot;);</span>
+        }
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (password.length() &lt; 4) {</span>
+<span class="nc" id="L209">            throw new IllegalArgumentException(&quot;Пароль должен содержать минимум 4 символа&quot;);</span>
+        }
+<span class="nc" id="L211">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

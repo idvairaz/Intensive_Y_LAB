@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="9.3">
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/menu/UserManagementMenu.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/menu/ProductMenu.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/menu/AuthMenu.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/menu/ConsoleMenu.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/cache/ProductCacheService.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/cache/impl/ProductCacheServiceImpl.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/cache/impl/InMemoryCacheService.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/service/AuditService.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/service/UserService.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/service/ProductService.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/service/AuthService.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/service/MetricsService.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/App.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/repository/impl/PostgresAuditRepository.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/repository/impl/PostgresUserRepository.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/repository/impl/PostgresProductRepository.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/config/DatabaseConfig.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/model/Product.java">
+</file>
+<file name="/home/ira/Documents/Y_LAB/product-catalog/src/main/java/org/idvairaz/model/User.java">
+</file>
+</checkstyle>

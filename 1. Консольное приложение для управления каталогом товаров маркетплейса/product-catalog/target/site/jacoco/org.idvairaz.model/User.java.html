@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>User.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.model</a> &gt; <span class="el_source">User.java</span></div><h1>User.java</h1><pre class="source lang-java linenums">package org.idvairaz.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+
+import java.io.Serializable;
+
+/**
+ * Класс представляющий пользователя системы.
+ * Содержит учетные данные и информацию о роли пользователя.
+ *
+ * @author idvavraz
+ * @version 2.0
+ */
+<span class="fc" id="L19">@Data</span>
+<span class="pc bfc" id="L20" title="All 2 branches covered.">@Builder</span>
+<span class="fc" id="L21">@NoArgsConstructor</span>
+<span class="fc" id="L22">@AllArgsConstructor</span>
+<span class="nc bnc" id="L23" title="All 14 branches missed.">@EqualsAndHashCode(onlyExplicitlyIncluded = true)</span>
+<span class="nc" id="L24">@ToString</span>
+public class User implements Serializable {
+
+
+    /** Уникальный идентификатор версии для сериализации */
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * Роли пользователей системы
+     */
+<span class="fc" id="L34">    public enum UserRole {</span>
+        /** Администратор - полный доступ ко всем функциям */
+<span class="fc" id="L36">        ADMIN,</span>
+        /** Менеджер - управление товарами и просмотр аудита */
+<span class="fc" id="L38">        MANAGER,</span>
+        /** Обычный пользователь - только просмотр товаров */
+<span class="fc" id="L40">        USER</span>
+    }
+
+    /** Уникальный идентификатор пользователя */
+    @EqualsAndHashCode.Include
+<span class="fc" id="L45">    private Long id;</span>
+
+    /** Логин пользователя */
+<span class="fc" id="L48">    private String username;</span>
+
+    /** Пароль  пользователя */
+<span class="fc" id="L51">    private String password;</span>
+
+    /** Роль пользователя в системе */
+<span class="fc" id="L54">    private UserRole role;</span>
+
+    /** Флаг indicating, выполнен ли вход пользователя в систему */
+    @Builder.Default
+<span class="fc" id="L58">    private boolean isLoggedIn = false;</span>
+
+    /**
+     * Проверяет, является ли пользователь администратором.
+     *
+     * @return true если пользователь имеет роль ADMIN
+     */
+    public boolean isAdmin() {
+<span class="nc" id="L66">        return UserRole.ADMIN.equals(role);</span>
+    }
+
+    /**
+     * Проверяет, является ли пользователь менеджером.
+     *
+     * @return true если пользователь имеет роль MANAGER
+     */
+    public boolean isManager() {
+<span class="nc" id="L75">        return UserRole.MANAGER.equals(role);</span>
+    }
+
+    /**
+     * Проверяет, является ли пользователь обычным пользователем.
+     *
+     * @return true если пользователь имеет роль USER
+     */
+    public boolean isUser() {
+<span class="nc" id="L84">        return UserRole.USER.equals(role);</span>
+    }
+
+    /**
+     * Проверяет, может ли пользователь управлять товарами.
+     *
+     * @return true если пользователь имеет права ADMIN или MANAGER
+     */
+    public boolean canManageProducts() {
+<span class="nc bnc" id="L93" title="All 4 branches missed.">        return isAdmin() || isManager();</span>
+    }
+
+    /**
+     * Проверяет, может ли пользователь просматривать журнал аудита.
+     *
+     * @return true если пользователь имеет права ADMIN или MANAGER
+     */
+    public boolean canViewAudit() {
+<span class="nc bnc" id="L102" title="All 4 branches missed.">        return isAdmin() || isManager();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

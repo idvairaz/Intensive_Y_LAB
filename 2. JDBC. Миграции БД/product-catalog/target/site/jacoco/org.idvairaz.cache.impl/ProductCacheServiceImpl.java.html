@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductCacheServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.cache.impl</a> &gt; <span class="el_source">ProductCacheServiceImpl.java</span></div><h1>ProductCacheServiceImpl.java</h1><pre class="source lang-java linenums">package org.idvairaz.cache.impl;
+
+
+import org.idvairaz.cache.CacheService;
+import org.idvairaz.cache.ProductCacheService;
+import org.idvairaz.model.Product;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Реализация сервиса кэширования товаров.
+ * Использует три отдельных кэша для разных типов данных о товарах.
+ *
+ * @author idvavraz
+ * @version 1.0
+ */
+public class ProductCacheServiceImpl implements ProductCacheService {
+
+    /** Кэш товаров по идентификаторам */
+    private final CacheService&lt;Long, Product&gt; productCache;
+
+    /** Кэш товаров по категориям */
+    private final CacheService&lt;String, List&lt;Product&gt;&gt; categoryCache;
+
+    /** Кэш товаров по брендам */
+    private final CacheService&lt;String, List&lt;Product&gt;&gt; brandCache;
+
+    /**
+     * Конструктор инициализирует три уровня кэширования.
+     */
+<span class="nc" id="L35">    public ProductCacheServiceImpl() {</span>
+<span class="nc" id="L36">        this.productCache = new InMemoryCacheService&lt;&gt;();</span>
+<span class="nc" id="L37">        this.categoryCache = new InMemoryCacheService&lt;&gt;();</span>
+<span class="nc" id="L38">        this.brandCache = new InMemoryCacheService&lt;&gt;();</span>
+<span class="nc" id="L39">        System.out.println(&quot;Сервис кэширования товаров инициализирован&quot;);</span>
+<span class="nc" id="L40">    }</span>
+
+    @Override
+    public void cacheProduct(Product product) {
+<span class="nc bnc" id="L44" title="All 4 branches missed.">        if (product != null &amp;&amp; product.getId() != null) {</span>
+<span class="nc" id="L45">            productCache.put(product.getId(), product);</span>
+        }
+<span class="nc" id="L47">    }</span>
+
+    @Override
+    public Optional&lt;Product&gt; getCachedProduct(Long id) {
+<span class="nc" id="L51">        return productCache.get(id);</span>
+    }
+
+    @Override
+    public void cacheProductsByCategory(String category, List&lt;Product&gt; products) {
+<span class="nc bnc" id="L56" title="All 4 branches missed.">        if (category != null &amp;&amp; products != null) {</span>
+<span class="nc" id="L57">            categoryCache.put(category.toLowerCase(), new ArrayList&lt;&gt;(products));</span>
+        }
+<span class="nc" id="L59">    }</span>
+
+    @Override
+    public Optional&lt;List&lt;Product&gt;&gt; getCachedProductsByCategory(String category) {
+<span class="nc" id="L63">        return categoryCache.get(category.toLowerCase());</span>
+    }
+
+    @Override
+    public void cacheProductsByBrand(String brand, List&lt;Product&gt; products) {
+<span class="nc bnc" id="L68" title="All 4 branches missed.">        if (brand != null &amp;&amp; products != null) {</span>
+<span class="nc" id="L69">            brandCache.put(brand.toLowerCase(), new ArrayList&lt;&gt;(products));</span>
+        }
+<span class="nc" id="L71">    }</span>
+
+    @Override
+    public Optional&lt;List&lt;Product&gt;&gt; getCachedProductsByBrand(String brand) {
+<span class="nc" id="L75">        return brandCache.get(brand.toLowerCase());</span>
+    }
+
+    @Override
+    public void clear() {
+<span class="nc" id="L80">        productCache.clear();</span>
+<span class="nc" id="L81">        categoryCache.clear();</span>
+<span class="nc" id="L82">        brandCache.clear();</span>
+<span class="nc" id="L83">        System.out.println(&quot;Все кэши товаров очищены&quot;);</span>
+<span class="nc" id="L84">    }</span>
+
+    @Override
+    public Map&lt;String, Object&gt; getStats() {
+<span class="nc" id="L88">        Map&lt;String, Object&gt; stats = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L89">        stats.put(&quot;productCache&quot;, productCache.getStats());</span>
+<span class="nc" id="L90">        stats.put(&quot;categoryCache&quot;, categoryCache.getStats());</span>
+<span class="nc" id="L91">        stats.put(&quot;brandCache&quot;, brandCache.getStats());</span>
+<span class="nc" id="L92">        stats.put(&quot;totalCachedProducts&quot;, productCache.size());</span>
+<span class="nc" id="L93">        stats.put(&quot;totalCachedCategories&quot;, categoryCache.size());</span>
+<span class="nc" id="L94">        stats.put(&quot;totalCachedBrands&quot;, brandCache.size());</span>
+<span class="nc" id="L95">        return stats;</span>
+    }
+
+    @Override
+    public void invalidateProduct(Long id) {
+<span class="nc" id="L100">        productCache.remove(id);</span>
+<span class="nc" id="L101">        clearCategoryAndBrandCaches();</span>
+<span class="nc" id="L102">    }</span>
+
+    /**
+     * Очищает кэши категорий и брендов.
+     * Вызывается при изменении товаров, так как списки могли измениться.
+     */
+    private void clearCategoryAndBrandCaches() {
+<span class="nc" id="L109">        categoryCache.clear();</span>
+<span class="nc" id="L110">        brandCache.clear();</span>
+<span class="nc" id="L111">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

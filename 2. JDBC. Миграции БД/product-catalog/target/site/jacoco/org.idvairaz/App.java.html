@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>App.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz</a> &gt; <span class="el_source">App.java</span></div><h1>App.java</h1><pre class="source lang-java linenums">package org.idvairaz;
+
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import org.idvairaz.cache.ProductCacheService;
+import org.idvairaz.cache.impl.ProductCacheServiceImpl;
+import org.idvairaz.config.DatabaseConfig;
+import org.idvairaz.menu.ConsoleMenu;
+import org.idvairaz.repository.AuditRepository;
+import org.idvairaz.repository.ProductRepository;
+import org.idvairaz.repository.UserRepository;
+import org.idvairaz.repository.impl.PostgresAuditRepository;
+import org.idvairaz.repository.impl.PostgresProductRepository;
+import org.idvairaz.repository.impl.PostgresUserRepository;
+import org.idvairaz.service.AuditService;
+import org.idvairaz.service.AuthService;
+import org.idvairaz.service.MetricsService;
+import org.idvairaz.service.ProductService;
+import org.idvairaz.service.UserService;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+
+
+/**
+ * Главный класс приложения &quot;Каталог товаров маркетплейса&quot;.
+ * Реализует паттерн Dependency Injection для компоновки компонентов системы.
+ * Архитектура приложения построена по принципу разделения ответственности:
+ * - Model: данные (Product, User)
+ * - Repository: доступ к данным (ProductRepository)
+ * - Service: бизнес-логика (ProductService, AuthService, etc.)
+ * - Menu: пользовательский интерфейс (ConsoleMenu)
+ *
+ * Приложение использует PostgreSQL для хранения данных, Liquibase для миграций
+ * и HikariCP для управления пулом соединений.
+ *
+ * @author idvavraz
+ * @version 2.0
+ */
+<span class="nc" id="L44">public class App {</span>
+
+    /**
+     * Выполняет миграции базы данных с использованием Liquibase.
+     * Создает служебную схему 'audit' для таблиц Liquibase и выполняет
+     * все невыполненные миграции из changelog-master.xml.
+     *
+     * @throws RuntimeException если произошла ошибка при выполнении миграций
+     *
+     *  Служебные таблицы Liquibase создаются в схеме 'audit',
+     *           таблицы приложения - в схеме указанной в конфигурации
+     */
+    private static void runLiquibaseMigrations() {
+<span class="nc" id="L57">        System.out.println(&quot;\n=== ЗАПУСК МИГРАЦИЙ LIQUIBASE ===&quot;);</span>
+
+<span class="nc" id="L59">        try (Connection connection = DatabaseConfig.getConnection()) {</span>
+
+<span class="nc" id="L61">            createAuditSchema(connection);</span>
+
+<span class="nc" id="L63">            Database database = DatabaseFactory.getInstance()</span>
+<span class="nc" id="L64">                    .findCorrectDatabaseImplementation(new JdbcConnection(connection));</span>
+
+<span class="nc" id="L66">            database.setLiquibaseSchemaName(DatabaseConfig.getLiquibaseSchema());</span>
+<span class="nc" id="L67">            database.setDefaultSchemaName(DatabaseConfig.getSchema());</span>
+
+<span class="nc" id="L69">            System.out.println(&quot;Схема для таблиц Liquibase: &quot; + DatabaseConfig.getLiquibaseSchema());</span>
+<span class="nc" id="L70">            System.out.println(&quot;Схема по умолчанию для приложения: &quot; + DatabaseConfig.getSchema());</span>
+
+<span class="nc" id="L72">            Liquibase liquibase = new Liquibase(</span>
+                    &quot;db/changelog/changelog-master.xml&quot;,
+                    new ClassLoaderResourceAccessor(),
+                    database
+            );
+
+<span class="nc" id="L78">            liquibase.update();</span>
+<span class="nc" id="L79">            System.out.println(&quot;Миграции Liquibase успешно выполнены&quot;);</span>
+
+<span class="nc" id="L81">        } catch (SQLException e) {</span>
+<span class="nc" id="L82">            String errorMsg = &quot;Ошибка подключения к базе данных при выполнении миграций: &quot; + e.getMessage();</span>
+<span class="nc" id="L83">            System.err.println(errorMsg);</span>
+<span class="nc" id="L84">            throw new RuntimeException(errorMsg, e);</span>
+<span class="nc" id="L85">        } catch (LiquibaseException e) {</span>
+<span class="nc" id="L86">            String errorMsg = &quot;Ошибка выполнения миграций Liquibase: &quot; + e.getMessage();</span>
+<span class="nc" id="L87">            System.err.println(errorMsg);</span>
+<span class="nc" id="L88">            throw new RuntimeException(errorMsg, e);</span>
+<span class="nc" id="L89">        } catch (Exception e) {</span>
+<span class="nc" id="L90">            String errorMsg = &quot;Неожиданная ошибка при выполнении миграций: &quot; + e.getMessage();</span>
+<span class="nc" id="L91">            System.err.println(errorMsg);</span>
+<span class="nc" id="L92">            throw new RuntimeException(errorMsg, e);</span>
+<span class="nc" id="L93">        }</span>
+<span class="nc" id="L94">    }</span>
+
+    /**
+     * Создает схему 'audit' для служебных таблиц Liquibase.
+     * Если схема уже существует, операция игнорируется.
+     *
+     * @param connection активное соединение с базой данных
+     * @throws SQLException если произошла ошибка при создании схемы
+     */
+    private static void createAuditSchema(Connection connection) throws SQLException {
+<span class="nc" id="L104">        try (var statement = connection.createStatement()) {</span>
+<span class="nc" id="L105">            statement.execute(&quot;CREATE SCHEMA IF NOT EXISTS audit&quot;);</span>
+<span class="nc" id="L106">            System.out.println(&quot;Схема 'audit' создана для системных таблиц Liquibase&quot;);</span>
+<span class="nc" id="L107">        } catch (SQLException e) {</span>
+<span class="nc" id="L108">            System.err.println(&quot;Ошибка создания схемы 'audit': &quot; + e.getMessage());</span>
+<span class="nc" id="L109">            throw e;</span>
+<span class="nc" id="L110">        }</span>
+<span class="nc" id="L111">    }</span>
+
+    /**
+     * Проверяет подключение к базе данных и выводит статистику пула соединений.
+     *
+     * @throws RuntimeException если не удалось установить подключение к БД
+     */
+    private static void testDatabaseConnection() {
+<span class="nc" id="L119">        System.out.println(&quot;\n=== ПРОВЕРКА ПОДКЛЮЧЕНИЯ К БАЗЕ ДАННЫХ ===&quot;);</span>
+
+<span class="nc" id="L121">        try (Connection connection = DatabaseConfig.getConnection()) {</span>
+<span class="nc" id="L122">            var databaseMetaData = connection.getMetaData();</span>
+<span class="nc" id="L123">            String connectionInfo = &quot;&quot;&quot;</span>
+                Успешное подключение к базе данных:
+                  - URL: %s
+                  - База данных: %s
+                  - Версия: %s
+                  - Схема: %s
+<span class="nc" id="L129">                &quot;&quot;&quot;.formatted(</span>
+<span class="nc" id="L130">                    databaseMetaData.getURL(),</span>
+<span class="nc" id="L131">                    databaseMetaData.getDatabaseProductName(),</span>
+<span class="nc" id="L132">                    databaseMetaData.getDatabaseProductVersion(),</span>
+<span class="nc" id="L133">                    DatabaseConfig.getSchema()</span>
+            );
+
+<span class="nc" id="L136">            System.out.println(connectionInfo);</span>
+<span class="nc" id="L137">            System.out.println(DatabaseConfig.getPoolStatistics());</span>
+
+<span class="nc" id="L139">        } catch (SQLException e) {</span>
+<span class="nc" id="L140">            String errorMsg = &quot;Ошибка подключения к базе данных: &quot; + e.getMessage();</span>
+<span class="nc" id="L141">            System.err.println(errorMsg);</span>
+<span class="nc" id="L142">            throw new RuntimeException(errorMsg, e);</span>
+<span class="nc" id="L143">        }</span>
+<span class="nc" id="L144">    }</span>
+
+    /**
+     * Инициализирует и настраивает все компоненты приложения по принципу Dependency Injection.
+     * Создает цепочку зависимостей: Repository → Service → Menu.
+     *
+     * @return сконфигурированный экземпляр ConsoleMenu готовый к запуску
+     */
+    private static ConsoleMenu initializeApplication() {
+<span class="nc" id="L153">        System.out.println(&quot;\n=== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ ===&quot;);</span>
+
+        try {
+<span class="nc" id="L156">            MetricsService metricsService = new MetricsService();</span>
+<span class="nc" id="L157">            System.out.println(&quot;Сервисы утилиты инициализированы&quot;);</span>
+
+<span class="nc" id="L159">            ProductRepository productRepository = new PostgresProductRepository();</span>
+<span class="nc" id="L160">            UserRepository userRepository = new PostgresUserRepository();</span>
+<span class="nc" id="L161">            AuditRepository auditRepository = new PostgresAuditRepository();</span>
+<span class="nc" id="L162">            System.out.println(&quot;Репозитории данных инициализированы&quot;);</span>
+
+<span class="nc" id="L164">            ProductCacheService cacheService = new ProductCacheServiceImpl();</span>
+
+<span class="nc" id="L166">            ProductService productService = new ProductService(productRepository, metricsService, cacheService);</span>
+<span class="nc" id="L167">            UserService userService = new UserService(userRepository);</span>
+<span class="nc" id="L168">            AuditService auditService = new AuditService(auditRepository);</span>
+<span class="nc" id="L169">            AuthService authService = new AuthService(userService);</span>
+<span class="nc" id="L170">            System.out.println(&quot;Бизнес-сервисы инициализированы&quot;);</span>
+
+
+<span class="nc" id="L173">            ConsoleMenu consoleMenu = new ConsoleMenu(productService, authService, auditService, metricsService);</span>
+<span class="nc" id="L174">            System.out.println(&quot;Пользовательский интерфейс инициализирован&quot;);</span>
+
+<span class="nc" id="L176">            return consoleMenu;</span>
+
+<span class="nc" id="L178">        } catch (Exception e) {</span>
+<span class="nc" id="L179">            String errorMsg = &quot;Ошибка инициализации приложения: &quot; + e.getMessage();</span>
+<span class="nc" id="L180">            System.err.println(errorMsg);</span>
+<span class="nc" id="L181">            throw new RuntimeException(errorMsg, e);</span>
+        }
+    }
+
+    /**
+     * Регистрирует обработчик для корректного завершения работы приложения.
+     * Обеспечивает закрытие пула соединений и других ресурсов при выходе.
+     */
+    private static void registerShutdownHook() {
+<span class="nc" id="L190">        Runtime.getRuntime().addShutdownHook(new Thread(() -&gt; {</span>
+<span class="nc" id="L191">            System.out.println(&quot;\n=== ЗАВЕРШЕНИЕ РАБОТЫ ПРИЛОЖЕНИЯ ===&quot;);</span>
+            try {
+<span class="nc" id="L193">                DatabaseConfig.close();</span>
+<span class="nc" id="L194">                System.out.println(&quot;Ресурсы приложения корректно освобождены&quot;);</span>
+<span class="nc" id="L195">            } catch (Exception e) {</span>
+<span class="nc" id="L196">                System.err.println(&quot;Ошибка при завершении работы: &quot; + e.getMessage());</span>
+<span class="nc" id="L197">            }</span>
+<span class="nc" id="L198">        }));</span>
+<span class="nc" id="L199">    }</span>
+
+    /**
+     * Точка входа в приложение. Выполняет компоновку зависимостей по принципу DI.
+     * Порядок инициализации:
+     * 1. Проверка подключения к базе данных
+     * 2. Выполнение миграций Liquibase
+     * 3. Инициализация компонентов приложения
+     * 4. Запуск главного меню
+     * 5. Корректное освобождение ресурсов при завершении
+     *
+     * @param args аргументы командной строки (не используются)
+     */
+    public static void main(String[] args) {
+<span class="nc" id="L213">        System.out.println(&quot;=== КАТАЛОГ ТОВАРОВ МАРКЕТПЛЕЙСА ===&quot;);</span>
+<span class="nc" id="L214">        System.out.println(&quot;Версия: 2.0 (PostgreSQL + Liquibase)&quot;);</span>
+
+<span class="nc" id="L216">        registerShutdownHook();</span>
+
+        try {
+<span class="nc" id="L219">            testDatabaseConnection();</span>
+<span class="nc" id="L220">            runLiquibaseMigrations();</span>
+<span class="nc" id="L221">            ConsoleMenu menu = initializeApplication();</span>
+
+<span class="nc" id="L223">            System.out.println(&quot;\n=== ЗАПУСК ПРИЛОЖЕНИЯ ===&quot;);</span>
+<span class="nc" id="L224">            menu.start();</span>
+
+<span class="nc" id="L226">        } catch (Exception e) {</span>
+<span class="nc" id="L227">            System.err.println(&quot;\nКритическая ошибка при запуске приложения: &quot; + e.getMessage());</span>
+<span class="nc" id="L228">            e.printStackTrace();</span>
+<span class="nc" id="L229">            System.exit(1);</span>
+        } finally {
+<span class="nc" id="L231">            DatabaseConfig.close();</span>
+        }
+<span class="nc" id="L233">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

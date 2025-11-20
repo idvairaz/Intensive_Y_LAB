@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MetricsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.service</a> &gt; <span class="el_source">MetricsService.java</span></div><h1>MetricsService.java</h1><pre class="source lang-java linenums">package org.idvairaz.service;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Сервис для сбора и анализа метрик производительности приложения.
+ * Собирает статистику по операциям: количество вызовов и время выполнения.
+ *
+ * @author idvavraz
+ * @version 1.0
+ */
+public class MetricsService {
+    /** Счетчики количества выполненных операций */
+<span class="nc" id="L17">    private final Map&lt;String, Integer&gt; operationCounters = new HashMap&lt;&gt;();</span>
+
+    /** Общее время выполнения для каждой операции */
+<span class="nc" id="L20">    private final Map&lt;String, Duration&gt; operationDurations = new HashMap&lt;&gt;();</span>
+
+    /** Время запуска приложения для расчета общего времени работы */
+    private LocalDateTime appStartTime;
+
+    /**
+     * Конструктор сервиса метрик.
+     * Инициализирует счетчики для основных операций и запоминает время запуска.
+     */
+<span class="nc" id="L29">    public MetricsService() {</span>
+<span class="nc" id="L30">        this.appStartTime = LocalDateTime.now();</span>
+<span class="nc" id="L31">        operationCounters.put(&quot;ПОИСК_ПО_ID&quot;, 0);</span>
+<span class="nc" id="L32">        operationCounters.put(&quot;ПОИСК_ПО_ИМЕНИ&quot;, 0);</span>
+<span class="nc" id="L33">        operationCounters.put(&quot;ПОИСК_ПО_КАТЕГОРИИ&quot;, 0);</span>
+<span class="nc" id="L34">        operationCounters.put(&quot;ПОИСК_ПО_БРЕНДУ&quot;, 0);</span>
+<span class="nc" id="L35">        operationCounters.put(&quot;ДОБАВИТЬ_ТОВАР&quot;, 0);</span>
+<span class="nc" id="L36">        operationCounters.put(&quot;ОБНОВИТЬ_ТОВАР&quot;, 0);</span>
+<span class="nc" id="L37">        operationCounters.put(&quot;УДАЛИТЬ_ТОВАР&quot;, 0);</span>
+<span class="nc" id="L38">        operationCounters.put(&quot; ПОЛУЧЕНИЕ_ВСЕХ_ТОВАРОВ&quot;, 0);</span>
+<span class="nc" id="L39">    }</span>
+
+    /**
+     * Записывает выполнение операции с измерением времени.
+     * Увеличивает счетчик операций и добавляет время выполнения к общей статистике.
+     *
+     * @param operation название операции
+     * @param duration время выполнения операции
+     */
+    public void recordOperation(String operation, Duration duration) {
+<span class="nc" id="L49">        operationCounters.put(operation, operationCounters.getOrDefault(operation, 0) + 1);</span>
+<span class="nc" id="L50">        operationDurations.merge(operation, duration, Duration::plus);</span>
+<span class="nc" id="L51">    }</span>
+
+    /**
+     * Увеличивает счетчик выполнения операции.
+     * Используется когда не требуется измерение времени выполнения.
+     *
+     * @param operation название операции
+     */
+    public void incrementCounter(String operation) {
+<span class="nc" id="L60">        operationCounters.put(operation, operationCounters.getOrDefault(operation, 0) + 1);</span>
+<span class="nc" id="L61">    }</span>
+
+    /**
+     * Выводит полную статистику метрик в консоль.
+     * Включает время работы приложения, статистику по операциям и экстремумы производительности.
+     */
+    public void showMetrics() {
+<span class="nc" id="L68">        System.out.println(&quot;\n=== МЕТРИКИ ПРИЛОЖЕНИЯ ===&quot;);</span>
+
+<span class="nc" id="L70">        showUptime();</span>
+
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (operationDurations.isEmpty()) {</span>
+<span class="nc" id="L73">            System.out.println(&quot;Данные о операциях отсутствуют&quot;);</span>
+<span class="nc" id="L74">            return;</span>
+        }
+
+<span class="nc" id="L77">        showOperationsStatistics();</span>
+<span class="nc" id="L78">        showPerformanceExtremes();</span>
+<span class="nc" id="L79">        showTotalOperations();</span>
+<span class="nc" id="L80">    }</span>
+
+    /**
+     * Выводит время работы приложения.
+     */
+    private void showUptime() {
+<span class="nc" id="L86">        Duration uptime = Duration.between(appStartTime, LocalDateTime.now());</span>
+<span class="nc" id="L87">        System.out.println(&quot;Время работы: &quot; + formatDuration(uptime));</span>
+<span class="nc" id="L88">    }</span>
+
+    /**
+     * Выводит статистику по всем операциям.
+     */
+    private void showOperationsStatistics() {
+<span class="nc" id="L94">        System.out.println(&quot;Статистика операций:&quot;);</span>
+<span class="nc" id="L95">        operationDurations.forEach((operation, totalDuration) -&gt; {</span>
+<span class="nc" id="L96">            int count = operationCounters.getOrDefault(operation, 0);</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">            if (count &gt; 0) {</span>
+<span class="nc" id="L98">                double avgMillis = totalDuration.toMillis() / (double) count;</span>
+<span class="nc" id="L99">                System.out.printf(&quot;   - %s: %d раз, среднее время: %.2f мс%n&quot;,</span>
+<span class="nc" id="L100">                        operation, count, avgMillis);</span>
+            }
+<span class="nc" id="L102">        });</span>
+<span class="nc" id="L103">    }</span>
+
+    /**
+     * Выводит самую быструю и самую медленную операцию.
+     */
+    private void showPerformanceExtremes() {
+<span class="nc" id="L109">        String fastestOp = findFastestOperation();</span>
+<span class="nc" id="L110">        String slowestOp = findSlowestOperation();</span>
+
+<span class="nc" id="L112">        System.out.println(&quot;Экстремумы:&quot;);</span>
+<span class="nc" id="L113">        System.out.println(&quot;   - Самая быстрая операция: &quot; + fastestOp);</span>
+<span class="nc" id="L114">        System.out.println(&quot;   - Самая медленная операция: &quot; + slowestOp);</span>
+<span class="nc" id="L115">    }</span>
+
+    /**
+     * Находит самую быструю операцию.
+     * @return название самой быстрой операции или &quot;N/A&quot; если данных нет
+     */
+    private String findFastestOperation() {
+<span class="nc" id="L122">        return operationDurations.entrySet().stream()</span>
+<span class="nc" id="L123">                .min(Map.Entry.comparingByValue())</span>
+<span class="nc" id="L124">                .map(Map.Entry::getKey)</span>
+<span class="nc" id="L125">                .orElse(&quot;N/A&quot;);</span>
+    }
+
+    /**
+     * Находит самую медленную операцию.
+     * @return название самой медленной операции или &quot;N/A&quot; если данных нет
+     */
+    private String findSlowestOperation() {
+<span class="nc" id="L133">        return operationDurations.entrySet().stream()</span>
+<span class="nc" id="L134">                .max(Map.Entry.comparingByValue())</span>
+<span class="nc" id="L135">                .map(Map.Entry::getKey)</span>
+<span class="nc" id="L136">                .orElse(&quot;N/A&quot;);</span>
+    }
+
+    /**
+     * Выводит общее количество выполненных операций.
+     */
+    private void showTotalOperations() {
+<span class="nc" id="L143">        int totalOperations = operationCounters.values().stream()</span>
+<span class="nc" id="L144">                .mapToInt(Integer::intValue)</span>
+<span class="nc" id="L145">                .sum();</span>
+<span class="nc" id="L146">        System.out.println(&quot;Всего операций: &quot; + totalOperations);</span>
+<span class="nc" id="L147">    }</span>
+
+    /**
+     * Форматирует продолжительность в читаемый вид.
+     * @param duration продолжительность для форматирования
+     * @return отформатированная строка времени
+     */
+    private String formatDuration(Duration duration) {
+<span class="nc" id="L155">        long hours = duration.toHours();</span>
+<span class="nc" id="L156">        long minutes = duration.toMinutesPart();</span>
+<span class="nc" id="L157">        long seconds = duration.toSecondsPart();</span>
+
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (hours &gt; 0) {</span>
+<span class="nc" id="L160">            return String.format(&quot;%d ч %d мин %d сек&quot;, hours, minutes, seconds);</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">        } else if (minutes &gt; 0) {</span>
+<span class="nc" id="L162">            return String.format(&quot;%d мин %d сек&quot;, minutes, seconds);</span>
+        } else {
+<span class="nc" id="L164">            return String.format(&quot;%d сек&quot;, seconds);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

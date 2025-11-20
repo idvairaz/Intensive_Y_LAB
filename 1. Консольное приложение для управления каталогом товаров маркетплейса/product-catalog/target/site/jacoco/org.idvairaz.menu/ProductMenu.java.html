@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductMenu.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.menu</a> &gt; <span class="el_source">ProductMenu.java</span></div><h1>ProductMenu.java</h1><pre class="source lang-java linenums">package org.idvairaz.menu;
+
+import org.idvairaz.model.Product;
+import org.idvairaz.service.AuthService;
+import org.idvairaz.service.AuditService;
+import org.idvairaz.service.ProductService;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
+
+/**
+ * Меню для операций с товарами.
+ * Содержит логику работы с каталогом товаров.
+ *
+ * @author idvavraz
+ * @version 1.0
+ */
+public class ProductMenu {
+
+    /** Сервис для работы с товарами */
+    private final ProductService productService;
+
+    /** Сервис для ведения журнала аудита */
+    private final AuditService auditService;
+
+    /** Сервис аутентификации и авторизации */
+    private final AuthService authService;
+
+    /** Сканер для ввода данных от пользователя */
+    private final Scanner scanner;
+
+    /**
+     * Конструктор меню товаров.
+     *
+     * @param productService сервис для работы с товарами
+     * @param auditService сервис для ведения аудита
+     * @param authService сервис аутентификации
+     * @param scanner сканер для ввода данных
+     */
+    public ProductMenu(ProductService productService, AuditService auditService,
+<span class="nc" id="L44">                       AuthService authService, Scanner scanner) {</span>
+<span class="nc" id="L45">        this.productService = productService;</span>
+<span class="nc" id="L46">        this.auditService = auditService;</span>
+<span class="nc" id="L47">        this.authService = authService;</span>
+<span class="nc" id="L48">        this.scanner = scanner;</span>
+<span class="nc" id="L49">    }</span>
+
+    /**
+     * Отображает все товары из каталога.
+     */
+    public void showAllProducts() {
+<span class="nc" id="L55">        System.out.println(&quot;\n=== ВСЕ ТОВАРЫ ===&quot;);</span>
+<span class="nc" id="L56">        List&lt;Product&gt; products = productService.getAllProducts();</span>
+
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (products.isEmpty()) {</span>
+<span class="nc" id="L59">            System.out.println(&quot;Товаров нет&quot;);</span>
+        } else {
+<span class="nc" id="L61">            products.forEach(this::printProductShort);</span>
+        }
+
+<span class="nc" id="L64">        productService.printProductStats();</span>
+<span class="nc" id="L65">    }</span>
+
+    /**
+     * Находит и отображает товар по идентификатору.
+     */
+    public void findProductById() {
+<span class="nc" id="L71">        System.out.println(&quot;\n=== ПОИСК ПО ID ===&quot;);</span>
+<span class="nc" id="L72">        System.out.print(&quot;Введите ID товара: &quot;);</span>
+
+        try {
+<span class="nc" id="L75">            Long id = scanner.nextLong();</span>
+<span class="nc" id="L76">            scanner.nextLine();</span>
+
+<span class="nc" id="L78">            Optional&lt;Product&gt; product = productService.getProductById(id);</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">            if (product.isPresent()) {</span>
+<span class="nc" id="L80">                printProductDetailed(product.get());</span>
+            } else {
+<span class="nc" id="L82">                System.out.println(&quot;Товар с ID &quot; + id + &quot; не найден&quot;);</span>
+            }
+<span class="nc" id="L84">        } catch (Exception e) {</span>
+<span class="nc" id="L85">            System.out.println(&quot;Ошибка: неверный формат ID&quot;);</span>
+<span class="nc" id="L86">            scanner.nextLine();</span>
+<span class="nc" id="L87">        }</span>
+<span class="nc" id="L88">    }</span>
+
+    /**
+     * Находит и отображает товар по названию.
+     */
+    public void findProductByName() {
+<span class="nc" id="L94">        System.out.println(&quot;\n=== ПОИСК ПО ИМЕНИ ===&quot;);</span>
+<span class="nc" id="L95">        System.out.print(&quot;Введите название товара: &quot;);</span>
+<span class="nc" id="L96">        String name = scanner.nextLine();</span>
+
+<span class="nc" id="L98">        Optional&lt;Product&gt; product = productService.getProductByName(name);</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (product.isPresent()) {</span>
+<span class="nc" id="L100">            printProductDetailed(product.get());</span>
+        } else {
+<span class="nc" id="L102">            System.out.println(&quot;Товар '&quot; + name + &quot;' не найден&quot;);</span>
+        }
+<span class="nc" id="L104">    }</span>
+
+    /**
+     * Находит и отображает товары по категории.
+     */
+    public void findProductsByCategory() {
+<span class="nc" id="L110">        System.out.println(&quot;\n=== ПОИСК ПО КАТЕГОРИИ ===&quot;);</span>
+<span class="nc" id="L111">        System.out.print(&quot;Введите категорию: &quot;);</span>
+<span class="nc" id="L112">        String category = scanner.nextLine();</span>
+
+<span class="nc" id="L114">        List&lt;Product&gt; products = productService.getProductsByCategory(category);</span>
+
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        if (products.isEmpty()) {</span>
+<span class="nc" id="L117">            System.out.println(&quot;Товаров в категории '&quot; + category + &quot;' нет&quot;);</span>
+        } else {
+<span class="nc" id="L119">            System.out.println(&quot;Найдено товаров: &quot; + products.size());</span>
+<span class="nc" id="L120">            products.forEach(this::printProductShort);</span>
+        }
+<span class="nc" id="L122">    }</span>
+
+    /**
+     * Находит и отображает товары по бренду.
+     */
+    public void findProductsByBrand() {
+<span class="nc" id="L128">        System.out.println(&quot;\n=== ПОИСК ПО БРЕНДУ ===&quot;);</span>
+<span class="nc" id="L129">        System.out.print(&quot;Введите бренд: &quot;);</span>
+<span class="nc" id="L130">        String brand = scanner.nextLine();</span>
+
+<span class="nc" id="L132">        List&lt;Product&gt; products = productService.getProductsByBrand(brand);</span>
+
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (products.isEmpty()) {</span>
+<span class="nc" id="L135">            System.out.println(&quot;Товаров бренда '&quot; + brand + &quot;' нет&quot;);</span>
+        } else {
+<span class="nc" id="L137">            System.out.println(&quot;Найдено товаров: &quot; + products.size());</span>
+<span class="nc" id="L138">            products.forEach(this::printProductShort);</span>
+        }
+<span class="nc" id="L140">    }</span>
+
+    /**
+     * Добавляет новый товар в каталог.
+     */
+    public void addProduct() {
+<span class="nc" id="L146">        String username = authService.getCurrentUsername();</span>
+<span class="nc" id="L147">        System.out.println(&quot;\n=== ДОБАВЛЕНИЕ ТОВАРА ===&quot;);</span>
+
+<span class="nc" id="L149">        String name = readName(&quot;Введите название: &quot;);</span>
+
+<span class="nc" id="L151">        System.out.print(&quot;Введите описание: &quot;);</span>
+<span class="nc" id="L152">        String description = scanner.nextLine();</span>
+
+<span class="nc" id="L154">        BigDecimal price = readBigDecimal(&quot;Введите цену: &quot;);</span>
+
+<span class="nc" id="L156">        System.out.print(&quot;Введите категорию: &quot;);</span>
+<span class="nc" id="L157">        String category = scanner.nextLine();</span>
+
+<span class="nc" id="L159">        System.out.print(&quot;Введите бренд: &quot;);</span>
+<span class="nc" id="L160">        String brand = scanner.nextLine();</span>
+
+<span class="nc" id="L162">        int stockQuantity = readInt(&quot;Введите количество: &quot;);</span>
+
+        try {
+<span class="nc" id="L165">            Product product = new Product(name, description, price, category, brand, stockQuantity);</span>
+<span class="nc" id="L166">            Product savedProduct = productService.addProduct(product);</span>
+<span class="nc" id="L167">            System.out.println(&quot;Товар добавлен! ID: &quot; + savedProduct.getId());</span>
+<span class="nc" id="L168">            auditService.logAction(username, &quot;УСПЕШНОЕ_ДОБАВЛЕНИЕ_ТОВАРА&quot;,</span>
+<span class="nc" id="L169">                    &quot;Добавлен товар: &quot; + name + &quot; (ID: &quot; + savedProduct.getId() + &quot;)&quot;);</span>
+<span class="nc" id="L170">        } catch (Exception e) {</span>
+<span class="nc" id="L171">            System.out.println(&quot;Ошибка: &quot; + e.getMessage());</span>
+<span class="nc" id="L172">            auditService.logAction(username, &quot;ОШИБКА_ДОБАВЛЕНИЯ_ТОВАРА&quot;,</span>
+<span class="nc" id="L173">                    &quot;Не удалось добавить товар: &quot; + name + &quot; - &quot; + e.getMessage());</span>
+<span class="nc" id="L174">        }</span>
+<span class="nc" id="L175">    }</span>
+
+    /**
+     * Обновляет существующий товар.
+     */
+    public void updateProduct() {
+<span class="nc" id="L181">        String username = authService.getCurrentUsername();</span>
+
+<span class="nc" id="L183">        System.out.println(&quot;\n=== ОБНОВЛЕНИЕ ТОВАРА ===&quot;);</span>
+<span class="nc" id="L184">        System.out.print(&quot;Введите ID товара для обновления: &quot;);</span>
+
+        try {
+<span class="nc" id="L187">            Long id = scanner.nextLong();</span>
+<span class="nc" id="L188">            scanner.nextLine();</span>
+
+<span class="nc" id="L190">            Optional&lt;Product&gt; existingProduct = productService.getProductById(id);</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">            if (existingProduct.isEmpty()) {</span>
+<span class="nc" id="L192">                System.out.println(&quot;Товар с ID &quot; + id + &quot; не найден&quot;);</span>
+<span class="nc" id="L193">                return;</span>
+            }
+
+<span class="nc" id="L196">            System.out.println(&quot;Текущие данные:&quot;);</span>
+<span class="nc" id="L197">            printProductDetailed(existingProduct.get());</span>
+<span class="nc" id="L198">            System.out.println(&quot;\nВведите новые данные:&quot;);</span>
+
+<span class="nc" id="L200">            String name = readName(&quot;Введите название: &quot;);</span>
+
+<span class="nc" id="L202">            System.out.print(&quot;Новое описание: &quot;);</span>
+<span class="nc" id="L203">            String description = scanner.nextLine();</span>
+
+<span class="nc" id="L205">            BigDecimal price = readBigDecimal(&quot;Новая цена: &quot;);</span>
+
+<span class="nc" id="L207">            System.out.print(&quot;Новая категория: &quot;);</span>
+<span class="nc" id="L208">            String category = scanner.nextLine();</span>
+
+<span class="nc" id="L210">            System.out.print(&quot;Новый бренд: &quot;);</span>
+<span class="nc" id="L211">            String brand = scanner.nextLine();</span>
+
+<span class="nc" id="L213">            int stockQuantity = readInt(&quot;Новое количество: &quot;);</span>
+
+<span class="nc" id="L215">            Product updatedProduct = new Product(name, description, price, category, brand, stockQuantity);</span>
+<span class="nc" id="L216">            Product result = productService.updateProduct(id, updatedProduct);</span>
+<span class="nc" id="L217">            System.out.println(&quot;Товар обновлен! ID: &quot; + result.getId());</span>
+<span class="nc" id="L218">            auditService.logAction(username, &quot;УСПЕШНОЕ_ОБНОВЛЕНИЕ_ТОВАРА&quot;,</span>
+                    &quot;Обновлен товар ID: &quot; + id + &quot; на &quot; + name);
+
+<span class="nc" id="L221">        } catch (Exception e) {</span>
+<span class="nc" id="L222">            System.out.println(&quot;Ошибка: Не верный формат ID&quot;);</span>
+<span class="nc" id="L223">            auditService.logAction(username, &quot;ОШИБКА_ОБНОВЛЕНИЯ_ТОВАРА&quot;,</span>
+<span class="nc" id="L224">                    &quot;Ошибка обновления товара: &quot; + e.getMessage());</span>
+<span class="nc" id="L225">        }</span>
+<span class="nc" id="L226">    }</span>
+
+    /**
+     * Удаляет товар из каталога.
+     */
+    public void deleteProduct() {
+<span class="nc" id="L232">        String username = authService.getCurrentUsername();</span>
+
+<span class="nc" id="L234">        System.out.println(&quot;\n=== УДАЛЕНИЕ ТОВАРА ===&quot;);</span>
+<span class="nc" id="L235">        System.out.print(&quot;Введите ID товара для удаления: &quot;);</span>
+
+        try {
+<span class="nc" id="L238">            Long id = scanner.nextLong();</span>
+<span class="nc" id="L239">            scanner.nextLine();</span>
+<span class="nc" id="L240">            Optional&lt;Product&gt; product = productService.getProductById(id);</span>
+
+<span class="nc bnc" id="L242" title="All 2 branches missed.">            if (product.isPresent()) {</span>
+<span class="nc" id="L243">                productService.deleteProduct(id);</span>
+<span class="nc" id="L244">                System.out.println(&quot;Товар с ID &quot; + id + &quot; удален&quot;);</span>
+<span class="nc" id="L245">                auditService.logAction(username, &quot;УСПЕШНОЕ_УДАЛЕНИЕ_ТОВАРА&quot;,</span>
+                        &quot;Удален товар ID: &quot; + id);
+            } else {
+<span class="nc" id="L248">                System.out.println(&quot;Товар с ID &quot; + id + &quot; не найден&quot;);</span>
+<span class="nc" id="L249">                auditService.logAction(username, &quot;ОШИБКА_УДАЛЕНИЯ_ТОВАРА&quot;,</span>
+                        &quot;Товар не найден ID: &quot; + id);
+            }
+<span class="nc" id="L252">        } catch (Exception e) {</span>
+<span class="nc" id="L253">            System.out.println(&quot;Ошибка: неверный формат ID&quot;);</span>
+<span class="nc" id="L254">            scanner.nextLine();</span>
+<span class="nc" id="L255">            auditService.logAction(username, &quot;ОШИБКА_УДАЛЕНИЯ_ТОВАРА&quot;,</span>
+<span class="nc" id="L256">                    &quot;Ошибка формата ID: &quot; + e.getMessage());</span>
+<span class="nc" id="L257">        }</span>
+<span class="nc" id="L258">    }</span>
+
+    /**
+     * Отображает статистику кэширования.
+     */
+    public void showCacheStats() {
+<span class="nc" id="L264">        productService.printCacheStats();</span>
+<span class="nc" id="L265">    }</span>
+
+    /**
+     * Читает и проверяет уникальность названия товара.
+     *
+     * @param prompt приглашение для ввода
+     * @return уникальное название товара
+     */
+    private String readName(String prompt) {
+<span class="nc" id="L274">        String name = &quot;&quot;;</span>
+        while (true) {
+<span class="nc" id="L276">            System.out.print(&quot;Введите название: &quot;);</span>
+<span class="nc" id="L277">            name = scanner.nextLine().trim();</span>
+<span class="nc" id="L278">            Optional&lt;Product&gt; existingProduct = productService.getProductByName(name);</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">            if (existingProduct.isPresent()) {</span>
+<span class="nc" id="L280">                System.out.println(&quot;Ошибка: товар с именем '&quot; + name + &quot;' уже существует. Введите другое название.&quot;);</span>
+            } else {
+                break;
+            }
+<span class="nc" id="L284">        }</span>
+<span class="nc" id="L285">        return name;</span>
+    }
+
+    /**
+     * Читает и проверяет цену товара.
+     *
+     * @param prompt приглашение для ввода (текст, который показывается пользователю перед вводом)
+     * @return корректная положительная цена
+     */
+    private BigDecimal readBigDecimal(String prompt) {
+        while (true) {
+<span class="nc" id="L296">            System.out.print(prompt);</span>
+<span class="nc" id="L297">            String input = scanner.nextLine().trim();</span>
+
+<span class="nc bnc" id="L299" title="All 2 branches missed.">            if (input.isEmpty()) {</span>
+<span class="nc" id="L300">                System.out.println(&quot;Ошибка: введите число. Попробуйте снова.&quot;);</span>
+<span class="nc" id="L301">                continue;</span>
+            }
+
+            try {
+<span class="nc" id="L305">                input = input.replace(',', '.');</span>
+<span class="nc" id="L306">                BigDecimal value = new BigDecimal(input);</span>
+
+<span class="nc bnc" id="L308" title="All 2 branches missed.">                if (value.compareTo(BigDecimal.ZERO) &lt;= 0) {</span>
+<span class="nc" id="L309">                    System.out.println(&quot;Ошибка: цена должна быть положительной. Попробуйте снова.&quot;);</span>
+<span class="nc" id="L310">                    continue;</span>
+                }
+
+<span class="nc" id="L313">                value = value.setScale(2, RoundingMode.HALF_UP);</span>
+
+<span class="nc" id="L315">                return value;</span>
+<span class="nc" id="L316">            } catch (NumberFormatException e) {</span>
+<span class="nc" id="L317">                System.out.println(&quot;Ошибка: введите корректное число (например: 15.99 или 15,99). Попробуйте снова.&quot;);</span>
+<span class="nc" id="L318">            } catch (ArithmeticException e) {</span>
+<span class="nc" id="L319">                System.out.println(&quot;Ошибка: некорректное числовое значение. Попробуйте снова.&quot;);</span>
+<span class="nc" id="L320">            }</span>
+<span class="nc" id="L321">        }</span>
+    }
+
+    /**
+     * Читает и проверяет количество товара.
+     *
+     * @param prompt приглашение для ввода (текст, который показывается пользователю перед вводом)
+     * @return корректное неотрицательное количество
+     */
+    private int readInt(String prompt) {
+        while (true) {
+<span class="nc" id="L332">            System.out.print(prompt);</span>
+<span class="nc" id="L333">            String input = scanner.nextLine().trim();</span>
+
+            try {
+<span class="nc" id="L336">                int value = Integer.parseInt(input);</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">                if (value &lt; 0) {</span>
+<span class="nc" id="L338">                    System.out.println(&quot;Ошибка: количество не может быть отрицательным. Попробуйте снова.&quot;);</span>
+<span class="nc" id="L339">                    continue;</span>
+                }
+<span class="nc" id="L341">                return value;</span>
+<span class="nc" id="L342">            } catch (NumberFormatException e) {</span>
+<span class="nc" id="L343">                System.out.println(&quot;Ошибка: введите целое не отрицательное число. Попробуйте снова.&quot;);</span>
+            }
+<span class="nc" id="L345">        }</span>
+    }
+
+    /**
+     * Выводит краткую информацию о товаре.
+     *
+     * @param product товар для отображения
+     */
+    private void printProductShort(Product product) {
+<span class="nc" id="L354">        System.out.printf(&quot;ID: %-3d | Название: %-15s | Цена: %-7.2f руб. | Категория: %-15s | Бренд: %-15s | Кол-во: %-3d шт.%n&quot;,</span>
+<span class="nc" id="L355">                product.getId(),</span>
+<span class="nc" id="L356">                product.getName(),</span>
+<span class="nc" id="L357">                product.getPrice(),</span>
+<span class="nc" id="L358">                product.getCategory(),</span>
+<span class="nc" id="L359">                product.getBrand(),</span>
+<span class="nc" id="L360">                product.getStockQuantity());</span>
+<span class="nc" id="L361">    }</span>
+
+    /**
+     * Выводит подробную информацию о товаре.
+     *
+     * @param product товар для отображения
+     */
+    private void printProductDetailed(Product product) {
+<span class="nc" id="L369">        System.out.printf(&quot;&quot;&quot;</span>
+            === ПОДРОБНАЯ ИНФОРМАЦИЯ ===
+            ID: %d
+            Название: %s
+            Описание: %s
+            Цена: %.2f руб.
+            Категория: %s
+            Бренд: %s
+            Количество: %d шт.
+            Создан: %s
+            Обновлен: %s
+            &quot;&quot;&quot;,
+<span class="nc" id="L381">                product.getId(),</span>
+<span class="nc" id="L382">                product.getName(),</span>
+<span class="nc" id="L383">                product.getDescription(),</span>
+<span class="nc" id="L384">                product.getPrice(),</span>
+<span class="nc" id="L385">                product.getCategory(),</span>
+<span class="nc" id="L386">                product.getBrand(),</span>
+<span class="nc" id="L387">                product.getStockQuantity(),</span>
+<span class="nc" id="L388">                product.getCreatedAt(),</span>
+<span class="nc" id="L389">                product.getUpdatedAt());</span>
+<span class="nc" id="L390">    }</span>
+}
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

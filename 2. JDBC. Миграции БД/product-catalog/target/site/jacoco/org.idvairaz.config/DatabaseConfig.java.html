@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.config</a> &gt; <span class="el_source">DatabaseConfig.java</span></div><h1>DatabaseConfig.java</h1><pre class="source lang-java linenums">package org.idvairaz.config;
+
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Properties;
+
+/**
+ * Утилитарный класс для управления подключением к базе данных.
+ * Загружает конфигурацию из файла application.properties и предоставляет
+ * методы для установления соединения с PostgreSQL через пул соединений HikariCP.
+ *
+ * @author idvavraz
+ * @version 1.0
+ */
+<span class="nc" id="L20"> public class DatabaseConfig {</span>
+
+    /**
+     * Хранилище свойств конфигурации, загруженных из application.properties.
+     * Инициализируется в статическом блоке и остается неизменным в течение
+     * работы приложения.
+     */
+<span class="fc" id="L27">    private static final Properties properties = new Properties();</span>
+
+    /**
+     * Пул соединений HikariCP для эффективного управления подключениями к БД.
+     * Инициализируется один раз при загрузке класса и используется throughout
+     * всего жизненного цикла приложения.
+     */
+    private static HikariDataSource dataSource;
+
+    /**
+     * Статический блок инициализации, выполняемый при первой загрузке класса.
+     * Загружает конфигурационные параметры из файла application.properties
+     * и инициализирует пул соединений HikariCP.
+     *
+     * @throws RuntimeException если файл конфигурации не найден или произошла ошибка ввода-вывода
+     */
+    static {
+<span class="fc" id="L44">        try (InputStream input = DatabaseConfig.class.getClassLoader()</span>
+<span class="fc" id="L45">                .getResourceAsStream(&quot;application.properties&quot;)) {</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">            if (input == null) {</span>
+<span class="nc" id="L47">                throw new RuntimeException(&quot;Не удалось найти application.properties&quot;);</span>
+            }
+<span class="fc" id="L49">            properties.load(input);</span>
+<span class="fc" id="L50">            System.out.println(&quot;Конфигурация базы данных успешно загружена&quot;);</span>
+
+<span class="fc" id="L52">            initializeConnectionPool();</span>
+
+<span class="nc" id="L54">        } catch (IOException e) {</span>
+<span class="nc" id="L55">            throw new RuntimeException(&quot;Ошибка загрузки конфигурации базы данных&quot;, e);</span>
+<span class="fc" id="L56">        }</span>
+<span class="fc" id="L57">    }</span>
+
+    /**
+     * Инициализирует и настраивает пул соединений HikariCP с параметрами
+     * из конфигурационного файла. Использует оптимальные настройки для PostgreSQL.
+     *
+     * @throws RuntimeException если не удалось инициализировать пул соединений
+     */
+    private static void initializeConnectionPool() {
+        try {
+<span class="fc" id="L67">            HikariConfig config = new HikariConfig();</span>
+
+<span class="fc" id="L69">            config.setJdbcUrl(properties.getProperty(&quot;db.url&quot;));</span>
+<span class="fc" id="L70">            config.setUsername(properties.getProperty(&quot;db.username&quot;));</span>
+<span class="fc" id="L71">            config.setPassword(properties.getProperty(&quot;db.password&quot;));</span>
+
+<span class="fc" id="L73">            config.setMaximumPoolSize(3);</span>
+<span class="fc" id="L74">            config.setMinimumIdle(1);</span>
+<span class="fc" id="L75">            config.setConnectionTimeout(5000);</span>
+
+<span class="fc" id="L77">            dataSource = new HikariDataSource(config);</span>
+<span class="fc" id="L78">            System.out.println(&quot;Пул соединений HikariCP инициализирован&quot;);</span>
+
+<span class="nc" id="L80">        } catch (Exception e) {</span>
+<span class="nc" id="L81">            throw new RuntimeException(&quot;Ошибка инициализации пула соединений&quot;, e);</span>
+<span class="fc" id="L82">        }</span>
+<span class="fc" id="L83">    }</span>
+
+    /**
+     * Устанавливает и возвращает соединение с базой данных PostgreSQL из пула.
+     * Автоматически устанавливает схему по умолчанию для каждого соединения.
+     *
+     * @return активное соединение с базой данных
+     * @throws SQLException если произошла ошибка при установлении соединения:
+     *         - неверные учетные данные
+     *         - база данных недоступна
+     *         - сетевые проблемы
+     *         - превышен лимит соединений в пуле
+     */
+    public static Connection getConnection() throws SQLException {
+<span class="fc" id="L97">        Connection connection = dataSource.getConnection();</span>
+
+<span class="fc" id="L99">        try (var stmt = connection.createStatement()) {</span>
+<span class="fc" id="L100">            stmt.execute(&quot;SET search_path TO &quot; + getSchema());</span>
+        }
+
+<span class="fc" id="L103">        return connection;</span>
+    }
+
+    /**
+     * Возвращает имя схемы базы данных, используемой приложением.
+     * Значение загружается из свойства 'db.schema' в application.properties.
+     * Если свойство не задано, возвращает значение по умолчанию 'marketplace'.
+     *
+     * @return имя схемы базы данных, не может быть null
+     */
+    public static String getSchema() {
+<span class="fc" id="L114">        return properties.getProperty(&quot;db.schema&quot;, &quot;marketplace&quot;);</span>
+    }
+
+    /**
+     * Закрывает пул соединений и освобождает все ресурсы.
+     * Должен вызываться при завершении работы приложения для корректного
+     * закрытия всех активных соединений с базой данных.
+     */
+    public static void close() {
+<span class="nc bnc" id="L123" title="All 4 branches missed.">        if (dataSource != null &amp;&amp; !dataSource.isClosed()) {</span>
+<span class="nc" id="L124">            dataSource.close();</span>
+<span class="nc" id="L125">            System.out.println(&quot;Пул соединений HikariCP успешно закрыт&quot;);</span>
+        }
+<span class="nc" id="L127">    }</span>
+
+    /**
+     * Возвращает статистику пула соединений для мониторинга и отладки.
+     * Включает информацию об активных, idle и ожидающих соединениях.
+     *
+     * @return строка с детальной статистикой пула соединений
+     */
+    public static String getPoolStatistics() {
+<span class="nc bnc" id="L136" title="All 4 branches missed.">        if (dataSource == null || dataSource.isClosed()) {</span>
+<span class="nc" id="L137">            return &quot;Пул соединений не инициализирован или закрыт&quot;;</span>
+        }
+
+<span class="nc" id="L140">        return String.format(</span>
+                &quot;Статистика пула соединений:%n&quot; +
+                        &quot;  - Активные соединения: %d%n&quot; +
+                        &quot;  - Простаивающие соединения: %d%n&quot; +
+                        &quot;  - Всего соединений: %d%n&quot; +
+                        &quot;  - Потоков в ожидании: %d%n&quot; +
+                        &quot;  - Состояние: %s&quot;,
+<span class="nc" id="L147">                dataSource.getHikariPoolMXBean().getActiveConnections(),</span>
+<span class="nc" id="L148">                dataSource.getHikariPoolMXBean().getIdleConnections(),</span>
+<span class="nc" id="L149">                dataSource.getHikariPoolMXBean().getTotalConnections(),</span>
+<span class="nc" id="L150">                dataSource.getHikariPoolMXBean().getThreadsAwaitingConnection(),</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">                dataSource.isRunning() ? &quot;работает&quot; : &quot;остановлен&quot;</span>
+        );
+    }
+
+    /**
+     * Возвращает имя схемы для таблиц Liquibase.
+     * Значение загружается из свойства 'liquibase.liquibase-schema' в application.properties.
+     * Если свойство не задано, возвращает значение по умолчанию 'audit'.
+     *
+     * @return имя схемы для таблиц Liquibase, не может быть null
+     */
+    public static String getLiquibaseSchema() {
+<span class="nc" id="L163">        return properties.getProperty(&quot;liquibase.liquibase-schema&quot;, &quot;audit&quot;);</span>
+    }
+
+    /**
+     * Вспомогательный метод для получения целочисленного свойства с значением по умолчанию.
+     *
+     * @param key ключ свойства
+     * @param defaultValue значение по умолчанию
+     * @return значение свойства или значение по умолчанию
+     */
+    private static int getIntProperty(String key, int defaultValue) {
+        try {
+<span class="nc" id="L175">            return Integer.parseInt(properties.getProperty(key, String.valueOf(defaultValue)));</span>
+<span class="nc" id="L176">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L177">            System.err.printf(&quot;Некорректное значение свойства %s, используется значение по умолчанию: %d%n&quot;,</span>
+<span class="nc" id="L178">                    key, defaultValue);</span>
+<span class="nc" id="L179">            return defaultValue;</span>
+        }
+    }
+
+    /**
+     * Вспомогательный метод для получения long свойства с значением по умолчанию.
+     *
+     * @param key ключ свойства
+     * @param defaultValue значение по умолчанию
+     * @return значение свойства или значение по умолчанию
+     */
+    private static long getLongProperty(String key, long defaultValue) {
+        try {
+<span class="nc" id="L192">            return Long.parseLong(properties.getProperty(key, String.valueOf(defaultValue)));</span>
+<span class="nc" id="L193">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L194">            System.err.printf(&quot;Некорректное значение свойства %s, используется значение по умолчанию: %d%n&quot;,</span>
+<span class="nc" id="L195">                    key, defaultValue);</span>
+<span class="nc" id="L196">            return defaultValue;</span>
+        }
+    }
+}
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

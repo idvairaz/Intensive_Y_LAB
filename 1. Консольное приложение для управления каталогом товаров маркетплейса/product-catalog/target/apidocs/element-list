@@ -1,0 +1,9 @@
+org.idvairaz
+org.idvairaz.cache
+org.idvairaz.cache.impl
+org.idvairaz.config
+org.idvairaz.menu
+org.idvairaz.model
+org.idvairaz.repository
+org.idvairaz.repository.impl
+org.idvairaz.service

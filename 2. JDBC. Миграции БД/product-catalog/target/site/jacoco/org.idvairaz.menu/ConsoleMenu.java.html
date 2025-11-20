@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConsoleMenu.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.menu</a> &gt; <span class="el_source">ConsoleMenu.java</span></div><h1>ConsoleMenu.java</h1><pre class="source lang-java linenums">package org.idvairaz.menu;
+
+import org.idvairaz.service.AuditService;
+import org.idvairaz.service.AuthService;
+import org.idvairaz.service.MetricsService;
+import org.idvairaz.service.ProductService;
+
+import java.util.Scanner;
+
+
+/**
+ * Консольное меню для взаимодействия с пользователем.
+ * Предоставляет интерфейс для управления каталогом товаров с системой авторизации.
+ *
+ * @author idvavraz
+ * @version 1.0
+ */
+public class ConsoleMenu {
+
+    /** Сервис для работы с товарами */
+    private final ProductService productService;
+
+    /** Сервис аутентификации и авторизации */
+    private final AuthService authService;
+
+    /** Сервис для ведения журнала аудита */
+    private final AuditService   auditService;
+
+    /** Сервис для сбора метрик производительности */
+    private final MetricsService metricsService;
+
+    /** Сканер для ввода данных от пользователя */
+    private final Scanner scanner;
+
+    /** Меню аутентификации */
+    private final AuthMenu authMenu;
+
+    /** Меню работы с товарами */
+    private final ProductMenu productMenu;
+
+    /** Меню управления пользователями */
+    private final UserManagementMenu userManagementMenu;
+
+    /** Флаг indicating, работает ли главное меню */
+<span class="nc" id="L45">    private boolean running = true;</span>
+
+    /**
+     * Конструктор консольного меню.
+     *
+     * @param productService сервис для работы с товарами
+     * @param authService сервис аутентификации и авторизации
+     * @param auditService сервис аудита действий
+     * @param metricsService сервис сбора метрик
+     */
+    public ConsoleMenu(ProductService productService, AuthService authService,
+<span class="nc" id="L56">                       AuditService auditService, MetricsService metricsService) {</span>
+<span class="nc" id="L57">        this.productService = productService;</span>
+<span class="nc" id="L58">        this.authService = authService;</span>
+<span class="nc" id="L59">        this.auditService = auditService;</span>
+<span class="nc" id="L60">        this.metricsService = metricsService;</span>
+<span class="nc" id="L61">        this.scanner = new Scanner(System.in);</span>
+
+<span class="nc" id="L63">        this.authMenu = new AuthMenu(authService, auditService, scanner);</span>
+<span class="nc" id="L64">        this.productMenu = new ProductMenu(productService, auditService, authService, scanner);</span>
+<span class="nc" id="L65">        this.userManagementMenu = new UserManagementMenu(authService, auditService, authMenu, scanner);</span>
+<span class="nc" id="L66">    }</span>
+
+    /**
+     * Запускает главный цикл приложения.
+     * Отображает меню авторизации, затем основное меню.
+     */
+    public void start() {
+<span class="nc" id="L73">        System.out.println(&quot;=== КАТАЛОГ ТОВАРОВ МАРКЕТПЛЕЙСА ===&quot;);</span>
+<span class="nc" id="L74">        authMenu.showAuthMenu();</span>
+
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        while (running) {</span>
+<span class="nc" id="L77">            showMainMenu();</span>
+<span class="nc" id="L78">            int choice = authMenu.readChoice();</span>
+<span class="nc" id="L79">            processChoice(choice);</span>
+<span class="nc" id="L80">        }</span>
+
+<span class="nc" id="L82">        scanner.close();</span>
+<span class="nc" id="L83">    }</span>
+
+    /**
+     * Отображает главное меню приложения с учетом прав доступа пользователя.
+     */
+    private void showMainMenu() {
+<span class="nc" id="L89">        System.out.println(&quot;\n=== ГЛАВНОЕ МЕНЮ ===&quot;);</span>
+<span class="nc" id="L90">        System.out.println(&quot;Текущий пользователь: &quot; + authService.getCurrentUsername() +</span>
+<span class="nc" id="L91">                &quot; [&quot; + authService.getCurrentUserRole() + &quot;]&quot;);</span>
+
+<span class="nc" id="L93">        System.out.println(&quot;1. Показать все товары&quot;);</span>
+<span class="nc" id="L94">        System.out.println(&quot;2. Найти товар по ID&quot;);</span>
+<span class="nc" id="L95">        System.out.println(&quot;3. Найти товар по имени&quot;);</span>
+<span class="nc" id="L96">        System.out.println(&quot;4. Найти товары по категории&quot;);</span>
+<span class="nc" id="L97">        System.out.println(&quot;5. Найти товары по бренду&quot;);</span>
+
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (authService.canManageProducts()) {</span>
+<span class="nc" id="L100">            System.out.println(&quot;6. Добавить товар&quot;);</span>
+<span class="nc" id="L101">            System.out.println(&quot;7. Обновить товар&quot;);</span>
+<span class="nc" id="L102">            System.out.println(&quot;8. Удалить товар&quot;);</span>
+        }
+
+<span class="nc" id="L105">        System.out.println(&quot;9. Статистика кэша&quot;);</span>
+
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (authService.canViewAudit()) {</span>
+<span class="nc" id="L108">            System.out.println(&quot;10. Журнал аудита&quot;);</span>
+        }
+
+<span class="nc bnc" id="L111" title="All 2 branches missed.">        if (authService.canManageProducts()) {</span>
+<span class="nc" id="L112">            System.out.println(&quot;11. Метрики приложения&quot;);</span>
+        }
+
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (authService.isAdmin()) {</span>
+<span class="nc" id="L116">            System.out.println(&quot;12. Управление пользователями&quot;);</span>
+        }
+
+<span class="nc" id="L119">        System.out.println(&quot;0. Выйти&quot;);</span>
+<span class="nc" id="L120">        System.out.print(&quot;Выберите действие: &quot;);</span>
+<span class="nc" id="L121">    }</span>
+
+    /**
+     * Обрабатывает выбор пользователя в главном меню.
+     *
+     * @param choice выбранный пункт меню
+     */
+    private void processChoice(int choice) {
+<span class="nc" id="L129">        String username = authService.getCurrentUsername();</span>
+
+<span class="nc bnc" id="L131" title="All 14 branches missed.">        switch (choice) {</span>
+            case 1 -&gt; {
+<span class="nc" id="L133">                auditService.logAction(username, &quot;ПРОСМОТР_ТОВАРОВ&quot;, &quot;Показать все товары&quot;);</span>
+<span class="nc" id="L134">                productMenu.showAllProducts();</span>
+<span class="nc" id="L135">            }</span>
+            case 2 -&gt; {
+<span class="nc" id="L137">                auditService.logAction(username, &quot;ПОИСК_ПО_ID&quot;, &quot;Поиск товара по ID&quot;);</span>
+<span class="nc" id="L138">                productMenu.findProductById();</span>
+<span class="nc" id="L139">            }</span>
+            case 3 -&gt; {
+<span class="nc" id="L141">                auditService.logAction(username, &quot;ПОИСК_ПО_ИМЕНИ&quot;, &quot;Поиск товара по имени&quot;);</span>
+<span class="nc" id="L142">                productMenu.findProductByName();</span>
+<span class="nc" id="L143">            }</span>
+            case 4 -&gt; {
+<span class="nc" id="L145">                auditService.logAction(username, &quot;ПОИСК_ПО_КАТЕГОРИИ&quot;, &quot;Поиск по категории&quot;);</span>
+<span class="nc" id="L146">                productMenu.findProductsByCategory();</span>
+<span class="nc" id="L147">            }</span>
+            case 5 -&gt; {
+<span class="nc" id="L149">                auditService.logAction(username, &quot;ПОИСК_ПО_БРЕНДУ&quot;, &quot;Поиск по бренду&quot;);</span>
+<span class="nc" id="L150">                productMenu.findProductsByBrand();</span>
+<span class="nc" id="L151">            }</span>
+            case 6 -&gt; {
+<span class="nc bnc" id="L153" title="All 2 branches missed.">                if (!authService.canManageProducts()) {</span>
+<span class="nc" id="L154">                    System.out.println(&quot;Ошибка: Недостаточно прав для добавления товаров&quot;);</span>
+<span class="nc" id="L155">                    auditService.logAction(username, &quot;ОТКАЗ_В_ДОСТУПЕ&quot;, &quot;Попытка добавить товар без прав&quot;);</span>
+<span class="nc" id="L156">                    return;</span>
+                }
+<span class="nc" id="L158">                auditService.logAction(username, &quot;ДОБАВЛЕНИЕ_ТОВАРА&quot;, &quot;Начало процесса&quot;);</span>
+<span class="nc" id="L159">                productMenu.addProduct();</span>
+<span class="nc" id="L160">            }</span>
+            case 7 -&gt; {
+<span class="nc bnc" id="L162" title="All 2 branches missed.">                if (!authService.canManageProducts()) {</span>
+<span class="nc" id="L163">                    System.out.println(&quot;Ошибка: Недостаточно прав для обновления товаров&quot;);</span>
+<span class="nc" id="L164">                    auditService.logAction(username, &quot;ОТКАЗ_В_ДОСТУПЕ&quot;, &quot;Попытка обновить товар без прав&quot;);</span>
+<span class="nc" id="L165">                    return;</span>
+                }
+<span class="nc" id="L167">                auditService.logAction(username, &quot;ОБНОВЛЕНИЕ_ТОВАРА&quot;, &quot;Начало процесса&quot;);</span>
+<span class="nc" id="L168">                productMenu.updateProduct();</span>
+<span class="nc" id="L169">            }</span>
+            case 8 -&gt; {
+<span class="nc bnc" id="L171" title="All 2 branches missed.">                if (!authService.canManageProducts()) {</span>
+<span class="nc" id="L172">                    System.out.println(&quot;Ошибка: Недостаточно прав для удаления товаров&quot;);</span>
+<span class="nc" id="L173">                    auditService.logAction(username, &quot;ОТКАЗ_В_ДОСТУПЕ&quot;, &quot;Попытка удалить товар без прав&quot;);</span>
+<span class="nc" id="L174">                    return;</span>
+                }
+<span class="nc" id="L176">                auditService.logAction(username, &quot;УДАЛЕНИЕ_ТОВАРА&quot;, &quot;Начало процесса&quot;);</span>
+<span class="nc" id="L177">                productMenu.deleteProduct();</span>
+<span class="nc" id="L178">            }</span>
+            case 9 -&gt; {
+<span class="nc" id="L180">                auditService.logAction(username, &quot;ПРОСМОТР_СТАТИСТИКИ&quot;, &quot;Статистика кэша&quot;);</span>
+<span class="nc" id="L181">                productMenu.showCacheStats();</span>
+<span class="nc" id="L182">            }</span>
+            case 10 -&gt; {
+<span class="nc bnc" id="L184" title="All 2 branches missed.">                if (!authService.canViewAudit()) {</span>
+<span class="nc" id="L185">                    System.out.println(&quot;Ошибка: Недостаточно прав для просмотра журнала аудита&quot;);</span>
+<span class="nc" id="L186">                    auditService.logAction(username, &quot;ОТКАЗ_В_ДОСТУПЕ&quot;, &quot;Попытка просмотреть аудит без прав&quot;);</span>
+<span class="nc" id="L187">                    return;</span>
+                }
+<span class="nc" id="L189">                auditService.logAction(username, &quot;ПРОСМОТР_ЖУРНАЛА&quot;, &quot;Просмотр журнала аудита&quot;);</span>
+<span class="nc" id="L190">                auditService.showAuditLog();</span>
+<span class="nc" id="L191">            }</span>
+            case 11 -&gt; {
+<span class="nc bnc" id="L193" title="All 2 branches missed.">                if (!authService.canManageProducts()) {</span>
+<span class="nc" id="L194">                    System.out.println(&quot;Ошибка: Недостаточно прав для просмотра метрик&quot;);</span>
+<span class="nc" id="L195">                    return;</span>
+                }
+<span class="nc" id="L197">                auditService.logAction(username, &quot;ПРОСМОТР_МЕТРИК&quot;, &quot;Просмотр метрик приложения&quot;);</span>
+<span class="nc" id="L198">                showMetrics();</span>
+<span class="nc" id="L199">            }</span>
+            case 12 -&gt; {
+<span class="nc bnc" id="L201" title="All 2 branches missed.">                if (!authService.isAdmin()) {</span>
+<span class="nc" id="L202">                    System.out.println(&quot;Ошибка: Требуются права администратора&quot;);</span>
+<span class="nc" id="L203">                    auditService.logAction(username, &quot;ОТКАЗ_В_ДОСТУПЕ&quot;, &quot;Попытка управления пользователями без прав ADMIN&quot;);</span>
+<span class="nc" id="L204">                    return;</span>
+                }
+<span class="nc" id="L206">                auditService.logAction(username, &quot;УПРАВЛЕНИЕ_ПОЛЬЗОВАТЕЛЯМИ&quot;, &quot;Просмотр управления пользователями&quot;);</span>
+<span class="nc" id="L207">                userManagementMenu.manageUsers();</span>
+<span class="nc" id="L208">            }</span>
+            case 0 -&gt; {
+<span class="nc" id="L210">                exit();</span>
+<span class="nc" id="L211">            }</span>
+            default -&gt; {
+<span class="nc" id="L213">                auditService.logAction(username, &quot;НЕВЕРНЫЙ_ВЫБОР&quot;, &quot;Выбрана несуществующая опция: &quot; + choice);</span>
+<span class="nc" id="L214">                System.out.println(&quot;Неверный выбор!&quot;);</span>
+            }
+        }
+<span class="nc" id="L217">    }</span>
+
+    /**
+     * Отображает метрики производительности приложения.
+     */
+    private void showMetrics() {
+<span class="nc" id="L223">        metricsService.showMetrics();</span>
+<span class="nc" id="L224">    }</span>
+
+    /**
+     * Выполняет выход пользователя из системы и возвращает в меню авторизации.
+     */
+    private void exit() {
+<span class="nc" id="L230">        String username = authService.getCurrentUsername();</span>
+<span class="nc" id="L231">        auditService.logAction(username, &quot;ВЫХОД&quot;, &quot;Завершение сеанса&quot;);</span>
+<span class="nc" id="L232">        System.out.println(&quot;До свидания! &quot; + username + &quot;!&quot;);</span>
+<span class="nc" id="L233">        authService.logout();</span>
+<span class="nc" id="L234">        authMenu.showAuthMenu();</span>
+<span class="nc" id="L235">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

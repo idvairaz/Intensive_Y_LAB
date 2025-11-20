@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"org.idvairaz"},{"l":"org.idvairaz.cache"},{"l":"org.idvairaz.cache.impl"},{"l":"org.idvairaz.config"},{"l":"org.idvairaz.menu"},{"l":"org.idvairaz.model"},{"l":"org.idvairaz.repository"},{"l":"org.idvairaz.repository.impl"},{"l":"org.idvairaz.service"}];updateSearchResults();

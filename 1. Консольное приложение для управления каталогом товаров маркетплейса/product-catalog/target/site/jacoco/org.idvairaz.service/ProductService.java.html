@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProductService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">product-catalog</a> &gt; <a href="index.source.html" class="el_package">org.idvairaz.service</a> &gt; <span class="el_source">ProductService.java</span></div><h1>ProductService.java</h1><pre class="source lang-java linenums">package org.idvairaz.service;
+
+import org.idvairaz.cache.ProductCacheService;
+import org.idvairaz.model.Product;
+import org.idvairaz.repository.ProductRepository;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Сервис для управления товарами в каталоге.
+ * Предоставляет бизнес-логику для операций с товарами, включая кэширование и метрики.
+ *
+ * @author idvavraz
+ * @version 2.0
+ */
+public class ProductService {
+
+    /** Репозиторий для работы с товарами */
+    private final ProductRepository productRepository;
+
+    /** Сервис для сбора метрик производительности */
+    private final MetricsService metricsService;
+
+    /** Сервис для кэширования товаров */
+    private final ProductCacheService cacheService;
+
+
+    /**
+     * Конструктор сервиса товаров.
+     *
+     * @param productRepository репозиторий для доступа к данным товаров
+     * @param metricsService сервис для сбора метрик производительности
+     * @param cacheService сервис для кэширования товаров
+     */
+    public ProductService(ProductRepository productRepository,
+                          MetricsService metricsService,
+<span class="nc" id="L42">                          ProductCacheService cacheService) {</span>
+<span class="nc" id="L43">        this.productRepository = productRepository;</span>
+<span class="nc" id="L44">        this.metricsService = metricsService;</span>
+<span class="nc" id="L45">        this.cacheService = cacheService;</span>
+<span class="nc" id="L46">        System.out.println(&quot;Сервис товаров инициализирован с кэшированием&quot;);</span>
+<span class="nc" id="L47">    }</span>
+
+    /**
+     * Добавляет новый товар в каталог.
+     * Очищает кэш после добавления.
+     *
+     * @param product товар для добавления
+     * @return сохраненный товар с присвоенным ID
+     */
+    public Product addProduct(Product product) {
+<span class="nc" id="L57">        LocalDateTime start = LocalDateTime.now();</span>
+
+<span class="nc" id="L59">        Product savedProduct = productRepository.save(product);</span>
+<span class="nc" id="L60">        cacheService.clear();</span>
+<span class="nc" id="L61">        metricsService.recordOperation(&quot;ДОБАВИТЬ_ТОВАР&quot;, Duration.between(start, LocalDateTime.now()));</span>
+
+<span class="nc" id="L63">        return savedProduct;</span>
+    }
+
+    /**
+     * Находит товар по его идентификатору.
+     * Сначала проверяет кэш, если нет - обращается к базе данных.
+     *
+     * @param id идентификатор товара
+     * @return Optional с найденным товаром или empty если товар не найден
+     */
+    public Optional&lt;Product&gt; getProductById(Long id) {
+<span class="nc" id="L74">        LocalDateTime start = LocalDateTime.now();</span>
+
+<span class="nc" id="L76">        Optional&lt;Product&gt; cachedProduct = cacheService.getCachedProduct(id);</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (cachedProduct.isPresent()) {</span>
+<span class="nc" id="L78">            System.out.println(&quot;Данные из кэша (ID: &quot; + id + &quot;)&quot;);</span>
+<span class="nc" id="L79">            metricsService.recordOperation(&quot;ПОИСК_ПО_ID&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L80">            return cachedProduct;</span>
+        }
+
+<span class="nc" id="L83">        Optional&lt;Product&gt; product = productRepository.findById(id);</span>
+<span class="nc" id="L84">        product.ifPresent(cacheService::cacheProduct);</span>
+
+<span class="nc" id="L86">        metricsService.recordOperation(&quot;ПОИСК_ПО_ID&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L87">        return product;</span>
+    }
+
+    /**
+     * Удаляет товар из каталога.
+     * Очищает кэш после удаления.
+     *
+     * @param id идентификатор товара для удаления
+     */
+    public void deleteProduct(Long id) {
+<span class="nc" id="L97">        LocalDateTime start = LocalDateTime.now();</span>
+
+<span class="nc" id="L99">        productRepository.delete(id);</span>
+<span class="nc" id="L100">        cacheService.invalidateProduct(id); // Инвалидируем кэш для этого товара</span>
+<span class="nc" id="L101">        metricsService.recordOperation(&quot;УДАЛИТЬ_ТОВАР&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L102">    }</span>
+
+    /**
+     * Находит товар по точному совпадению названия.
+     * Поиск выполняется без учета регистра.
+     *
+     * @param name название товара для поиска
+     * @return Optional с найденным товаром или empty если товар не найден
+     */
+    public Optional&lt;Product&gt; getProductByName(String name) {
+<span class="nc" id="L112">        LocalDateTime start = LocalDateTime.now();</span>
+<span class="nc" id="L113">        Optional&lt;Product&gt; product = productRepository.findByName(name);</span>
+<span class="nc" id="L114">        metricsService.recordOperation(&quot;ПОИСК_ПО_ИМЕНИ&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L115">        return product;</span>
+    }
+
+
+    /**
+     * Находит все товары указанной категории.
+     * Использует кэширование для ускорения повторных запросов.
+     *
+     * @param category категория для поиска
+     * @return список товаров в указанной категории
+     */
+    public List&lt;Product&gt; getProductsByCategory(String category) {
+<span class="nc" id="L127">        LocalDateTime start = LocalDateTime.now();</span>
+
+<span class="nc" id="L129">        Optional&lt;List&lt;Product&gt;&gt; cachedProducts = cacheService.getCachedProductsByCategory(category);</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (cachedProducts.isPresent()) {</span>
+<span class="nc" id="L131">            System.out.println(&quot;Данные из кэша (категория: &quot; + category + &quot;)&quot;);</span>
+<span class="nc" id="L132">            metricsService.recordOperation(&quot;ПОИСК_ПО_КАТЕГОРИИ&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L133">            return new ArrayList&lt;&gt;(cachedProducts.get());</span>
+        }
+
+<span class="nc" id="L136">        List&lt;Product&gt; products = productRepository.findByCategory(category);</span>
+<span class="nc" id="L137">        cacheService.cacheProductsByCategory(category, products); // Сохраняем в кэш</span>
+
+<span class="nc" id="L139">        metricsService.recordOperation(&quot;ПОИСК_ПО_КАТЕГОРИИ&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L140">        return products;</span>
+    }
+
+    /**
+     * Находит все товары указанного бренда.
+     * Использует кэширование для ускорения повторных запросов.
+     *
+     * @param brand бренд для поиска
+     * @return список товаров указанного бренда
+     */
+    public List&lt;Product&gt; getProductsByBrand(String brand) {
+<span class="nc" id="L151">        LocalDateTime start = LocalDateTime.now();</span>
+
+<span class="nc" id="L153">        Optional&lt;List&lt;Product&gt;&gt; cachedProducts = cacheService.getCachedProductsByBrand(brand);</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if (cachedProducts.isPresent()) {</span>
+<span class="nc" id="L155">            System.out.println(&quot;Данные из кэша (бренд: &quot; + brand + &quot;)&quot;);</span>
+<span class="nc" id="L156">            metricsService.recordOperation(&quot;ПОИСК_ПО_БРЕНДУ&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L157">            return new ArrayList&lt;&gt;(cachedProducts.get());</span>
+        }
+
+<span class="nc" id="L160">        List&lt;Product&gt; products = productRepository.findByBrand(brand);</span>
+<span class="nc" id="L161">        cacheService.cacheProductsByBrand(brand, products); // Сохраняем в кэш</span>
+
+<span class="nc" id="L163">        metricsService.recordOperation(&quot;ПОИСК_ПО_БРЕНДУ&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L164">        return products;</span>
+    }
+
+    /**
+     * Обновляет существующий товар.
+     * Очищает кэш после обновления.
+     *
+     * @param id идентификатор товара для обновления
+     * @param updatedProduct обновленные данные товара
+     * @return обновленный товар
+     */
+    public Product updateProduct(Long id, Product updatedProduct) {
+<span class="nc" id="L176">        LocalDateTime start = LocalDateTime.now();</span>
+
+<span class="nc" id="L178">        Optional&lt;Product&gt; existingProduct = productRepository.findById(id);</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (existingProduct.isEmpty()) {</span>
+<span class="nc" id="L180">            throw new IllegalArgumentException(&quot;Товар с ID &quot; + id + &quot; не найден&quot;);</span>
+        }
+
+<span class="nc bnc" id="L183" title="All 2 branches missed.">        if (!existingProduct.get().getName().equals(updatedProduct.getName())) {</span>
+<span class="nc" id="L184">            Optional&lt;Product&gt; productWithSameName = productRepository.findByName(updatedProduct.getName());</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">            if (productWithSameName.isPresent()) {</span>
+<span class="nc" id="L186">                throw new IllegalArgumentException(&quot;Товар с именем '&quot; + updatedProduct.getName() + &quot;' уже существует&quot;);</span>
+            }
+        }
+
+<span class="nc" id="L190">        updatedProduct.setId(id);</span>
+<span class="nc" id="L191">        updatedProduct.setUpdatedAt(LocalDateTime.now());</span>
+
+<span class="nc" id="L193">        Product savedProduct = productRepository.save(updatedProduct);</span>
+<span class="nc" id="L194">        cacheService.invalidateProduct(id);</span>
+<span class="nc" id="L195">        metricsService.recordOperation(&quot;ОБНОВИТЬ_ТОВАР&quot;, Duration.between(start, LocalDateTime.now()));</span>
+
+<span class="nc" id="L197">        return savedProduct;</span>
+    }
+
+    /**
+     * Возвращает список всех товаров в каталоге.
+     *
+     * @return список всех товаров
+     */
+    public List&lt;Product&gt; getAllProducts() {
+<span class="nc" id="L206">        LocalDateTime start = LocalDateTime.now();</span>
+<span class="nc" id="L207">        List&lt;Product&gt; products = productRepository.findAll();</span>
+<span class="nc" id="L208">        metricsService.recordOperation(&quot;ПОЛУЧЕНИЕ_ВСЕХ_ТОВАРОВ&quot;, Duration.between(start, LocalDateTime.now()));</span>
+<span class="nc" id="L209">        return products;</span>
+    }
+
+    /**
+     * Выводит статистику кэширования в консоль.
+     * Включает информацию о размерах кэшей, эффективности попаданий и детали по категориям и брендам.
+     */
+    public void printCacheStats() {
+<span class="nc" id="L217">        System.out.println(&quot;\n=== СТАТИСТИКА КЭША ===&quot;);</span>
+<span class="nc" id="L218">        Map&lt;String, Object&gt; stats = cacheService.getStats();</span>
+
+<span class="nc" id="L220">        System.out.printf(&quot;&quot;&quot;</span>
+            Основные метрики:
+               - Товаров в кэше: %d
+               - Категорий в кэше: %d
+               - Брендов в кэше: %d
+            &quot;&quot;&quot;,
+<span class="nc" id="L226">                stats.get(&quot;totalCachedProducts&quot;),</span>
+<span class="nc" id="L227">                stats.get(&quot;totalCachedCategories&quot;),</span>
+<span class="nc" id="L228">                stats.get(&quot;totalCachedBrands&quot;));</span>
+
+<span class="nc" id="L230">        Map&lt;String, Object&gt; productStats = (Map&lt;String, Object&gt;) stats.get(&quot;productCache&quot;);</span>
+<span class="nc" id="L231">        int hits = (Integer) productStats.get(&quot;hits&quot;);</span>
+<span class="nc" id="L232">        int misses = (Integer) productStats.get(&quot;misses&quot;);</span>
+<span class="nc" id="L233">        int totalRequests = hits + misses;</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">        if (totalRequests &gt; 0) {</span>
+<span class="nc" id="L235">            double hitRate = (double) hits / totalRequests * 100;</span>
+<span class="nc" id="L236">            System.out.printf(&quot;&quot;&quot;</span>
+                    Эффективность кэширования:
+                       - Попадания в кэш: %d
+                       - Промахи кэша: %d
+                       - Всего запросов: %d
+                       - Эффективность: %.1f%%
+<span class="nc" id="L242">                    &quot;&quot;&quot;,  hits, misses, totalRequests, hitRate);</span>
+<span class="nc" id="L243">        } else {</span>
+<span class="nc" id="L244">            System.out.println(&quot;   - Запросов к кэшу еще не было&quot;);</span>
+        }
+<span class="nc" id="L246">    }</span>
+
+    /**
+     * Выводит общую статистику товаров в консоль.
+     */
+    public void printProductStats() {
+<span class="nc" id="L252">        System.out.printf(&quot;&quot;&quot;</span>
+            === СТАТИСТИКА ТОВАРОВ ===
+            Общая статистика:
+             - Всего товаров: %d
+             - Категорий: %d
+             - Брендов: %d
+            &quot;&quot;&quot;,
+<span class="nc" id="L259">                productRepository.getTotalProductsCount(),</span>
+<span class="nc" id="L260">                productRepository.getTotalCategoriesCount(),</span>
+<span class="nc" id="L261">                productRepository.getTotalBrandsCount());</span>
+<span class="nc" id="L262">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
