@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="1.2-1" author="idvavraz">
+        <comment>Insert default users</comment>
+        <insert tableName="users" schemaName="marketplace">
+            <column name="id" valueNumeric="1"/>
+            <column name="username" value="admin"/>
+            <column name="password" value="admin123"/>
+            <column name="role" value="ADMIN"/>
+            <column name="is_logged_in" valueBoolean="false"/>
+        </insert>
+        <insert tableName="users" schemaName="marketplace">
+            <column name="id" valueNumeric="2"/>
+            <column name="username" value="manager"/>
+            <column name="password" value="manager123"/>
+            <column name="role" value="MANAGER"/>
+            <column name="is_logged_in" valueBoolean="false"/>
+        </insert>
+        <insert tableName="users" schemaName="marketplace">
+            <column name="id" valueNumeric="3"/>
+            <column name="username" value="user"/>
+            <column name="password" value="user123"/>
+            <column name="role" value="USER"/>
+            <column name="is_logged_in" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="1.2-2" author="idvavraz">
+        <comment>Insert sample products</comment>
+        <insert tableName="products" schemaName="marketplace">
+            <column name="id" valueNumeric="1"/>
+            <column name="name" value="iPhone 14"/>
+            <column name="description" value="Latest Apple smartphone"/>
+            <column name="price" valueNumeric="999.99"/>
+            <column name="category" value="Electronics"/>
+            <column name="brand" value="Apple"/>
+            <column name="stock_quantity" valueNumeric="50"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="products" schemaName="marketplace">
+            <column name="id" valueNumeric="2"/>
+            <column name="name" value="MacBook Pro"/>
+            <column name="description" value="Professional laptop"/>
+            <column name="price" valueNumeric="1999.99"/>
+            <column name="category" value="Electronics"/>
+            <column name="brand" value="Apple"/>
+            <column name="stock_quantity" valueNumeric="25"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+        <insert tableName="products" schemaName="marketplace">
+            <column name="id" valueNumeric="3"/>
+            <column name="name" value="Samsung Galaxy S23"/>
+            <column name="description" value="Android flagship smartphone"/>
+            <column name="price" valueNumeric="899.99"/>
+            <column name="category" value="Electronics"/>
+            <column name="brand" value="Samsung"/>
+            <column name="stock_quantity" valueNumeric="30"/>
+            <column name="created_at" valueComputed="CURRENT_TIMESTAMP"/>
+            <column name="updated_at" valueComputed="CURRENT_TIMESTAMP"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="1.2-3" author="idvavraz">
+        <comment>Fix sequence values after data insertion</comment>
+        <sql>SELECT setval('marketplace.product_seq', (SELECT COALESCE(MAX(id), 0) FROM marketplace.products))</sql>
+        <sql>SELECT setval('marketplace.user_seq', (SELECT COALESCE(MAX(id), 0) FROM marketplace.users))</sql>
+
+    </changeSet>
+
+</databaseChangeLog>

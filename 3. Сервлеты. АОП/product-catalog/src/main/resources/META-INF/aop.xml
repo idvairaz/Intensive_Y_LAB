@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aspectj>
+    <weaver options="-verbose">
+        <include within="org.idvairaz..*"/>
+        <include within="org.idvairaz.service..*"/>
+        <include within="org.idvairaz.menu..*"/>
+        <include within="org.idvairaz.web..*"/>
+        <include within="jakarta.servlet..*"/>
+
+
+    </weaver>
+
+    <aspects>
+        <aspect name="org.idvairaz.aspect.AuditAspect"/>
+        <aspect name="org.idvairaz.aspect.PerformanceAspect"/>
+        <aspect name="org.idvairaz.aspect.HttpAuditAspect"/>
+
+    </aspects>
+</aspectj>

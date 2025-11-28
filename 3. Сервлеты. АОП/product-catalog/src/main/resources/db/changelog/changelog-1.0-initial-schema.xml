@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="1.0-1" author="idvavraz">
+        <comment>Create marketplace schema</comment>
+        <sql>CREATE SCHEMA IF NOT EXISTS marketplace;</sql>
+    </changeSet>
+
+    <changeSet id="1.0-2" author="idvavraz">
+        <comment>Create liquibase_schema for Liquibase service tables</comment>
+        <sql>CREATE SCHEMA IF NOT EXISTS liquibase_schema;</sql>
+    </changeSet>
+
+    <changeSet id="1.0-3" author="idvavraz">
+        <comment>Create audit schema for user action logs</comment>
+        <sql>CREATE SCHEMA IF NOT EXISTS audit;</sql>
+    </changeSet>
+
+    <changeSet id="1.0-4" author="idvavraz">
+        <comment>Create sequences</comment>
+        <createSequence
+                sequenceName="product_seq"
+                schemaName="marketplace"
+                startValue="1"
+                incrementBy="1"/>
+        <createSequence
+                sequenceName="user_seq"
+                schemaName="marketplace"
+                startValue="1"
+                incrementBy="1"/>
+        <createSequence
+                sequenceName="audit_log_seq"
+                schemaName="audit"
+                startValue="1"
+                incrementBy="1"/>
+    </changeSet>
+
+    <changeSet id="1.0-5" author="idvavraz">
+        <comment>Create products table</comment>
+        <createTable tableName="products" schemaName="marketplace">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="TEXT"/>
+            <column name="price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="brand" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stock_quantity" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1.0-6" author="idvavraz">
+        <comment>Create users table</comment>
+        <createTable tableName="users" schemaName="marketplace">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_logged_in" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1.0-7" author="idvavraz">
+        <comment>Create audit logs table</comment>
+        <createTable tableName="logs" schemaName="audit">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="details" type="TEXT"/>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="1.0-8" author="idvavraz">
+        <comment>Create indexes for better performance</comment>
+        <createIndex indexName="idx_products_name" tableName="products" schemaName="marketplace">
+            <column name="name"/>
+        </createIndex>
+        <createIndex indexName="idx_products_category" tableName="products" schemaName="marketplace">
+            <column name="category"/>
+        </createIndex>
+        <createIndex indexName="idx_products_brand" tableName="products" schemaName="marketplace">
+            <column name="brand"/>
+        </createIndex>
+        <createIndex indexName="idx_users_username" tableName="users" schemaName="marketplace">
+            <column name="username"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_username" tableName="logs" schemaName="audit">
+            <column name="username"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_created_at" tableName="logs" schemaName="audit">
+            <column name="created_at"/>
+        </createIndex>
+        <createIndex indexName="idx_audit_action" tableName="logs" schemaName="audit">
+            <column name="action"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
+

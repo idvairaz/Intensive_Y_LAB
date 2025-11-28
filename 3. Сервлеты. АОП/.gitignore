@@ -1,0 +1,8 @@
+.idea/*
+*.dat
+/product-catalog/target/
+/product-catalog/product-catalog.iml
+.idea/libraries/
+cookies.txt
+tomcat.*/
+*.log
