@@ -1,4 +1,4 @@
-# Product Catalog Service JDBC Migration Postgres
+# Product Catalog Service. Servlets. AOP
 
 **III Задание в рамках Java интенсива от Y_LAB** 
 
